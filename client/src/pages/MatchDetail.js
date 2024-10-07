@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { addUserTeam, getMatch, getUserMatchTeam } from "../api/api";
+import { addUserTeam, getEvents, getMatch, getUserMatchTeam, joinEvent } from "../api/api";
 import ToastMsg from "../components/toast/ToastMsg";
 import { toast } from "react-toastify";
 import { numberWithCommas } from "../utils/helpers";
@@ -14,13 +14,13 @@ const PreviewPlayer = ({ player, team }) => {
     <div className=" flex flex-col text-center items-center w-20 relative ">
       {team && (
         <>
-          {team?.captain === player?._id  && <div className="absolute top-0 right-0 w-6 h-6 rounded-full flex-center bg-white text-xs font-semibold">
-          <div> C</div>
-        </div>}
-          {team?.viceCaptain === player?._id  &&<div className="absolute top-0 right-0 w-6 h-6 rounded-full flex-center bg-white text-xs font-semibold">
-          <div>VC</div>
-        </div>}
-        
+          {team?.captain === player?._id && <div className="absolute top-0 right-0 w-6 h-6 rounded-full flex-center bg-white text-xs font-semibold">
+            <div> C</div>
+          </div>}
+          {team?.viceCaptain === player?._id && <div className="absolute top-0 right-0 w-6 h-6 rounded-full flex-center bg-white text-xs font-semibold">
+            <div>VC</div>
+          </div>}
+
         </>
       )}
       <img className="w-10 h-10 object-cover mr-1" src={player.image || '/images/user.png'} alt="user" />
@@ -32,8 +32,8 @@ const PreviewPlayer = ({ player, team }) => {
   )
 }
 const MatchDetail = () => {
-  const [isView,setIsView]=useState(false)
-  const {user}=useSelector(state=>state?.auth)
+  const [isView, setIsView] = useState(false)
+  const { user } = useSelector(state => state?.auth)
   const [captain, setCaptain] = useState(null)
   const [viceCaptain, setViceCaptain] = useState(null)
   const [next, setNext] = useState(false)
@@ -46,20 +46,22 @@ const MatchDetail = () => {
   const [fetchLoading, setFetchLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const allPoints = selectedPlayers?.reduce((acc, p) => acc + Number(p?.credits), 0)
-  const [selectedTeam,setSelectedTeam]=useState(null)
+  const [selectedTeam, setSelectedTeam] = useState(null)
+  const [teamNumber, setTeamNumber] = useState(null)
+  const [events, setEvents] = useState([])
   const handleSelectPlayer = (player) => {
     if (selectedPlayers?.find(p => p._id === player?._id)) {
       setSelectedPlayers(selectedPlayers.filter(p => p._id !== player._id))
-      if(player?._id===captain){
+      if (player?._id === captain) {
         setCaptain(null)
-      }else if(player?._id===viceCaptain){
+      } else if (player?._id === viceCaptain) {
         setViceCaptain(null)
       }
     } else {
-      if (selectedPlayers?.length===11){
+      if (selectedPlayers?.length === 11) {
         toast.error('Maximum 11 players can be selected');
         return
-      }else{
+      } else {
         setSelectedPlayers([...selectedPlayers, player])
       }
     }
@@ -82,10 +84,26 @@ const MatchDetail = () => {
       setFetchLoading(false)
     }
   };
-  const getUserMatchTeams = async (matchId,userId) => {
+  const getEventsDetail = async (id) => {
     setFetchLoading(true)
     try {
-      const res = await getUserMatchTeam({matchId,userId});
+      const res = await getEvents(id);
+      const { status, data } = res;
+      if (status >= 200 && status <= 300) {
+        setEvents(data);
+      } else {
+        toast.error(<ToastMsg title={data.message} />);
+      }
+    } catch (error) {
+      toast.error(<ToastMsg title={error?.response?.data?.message} />);
+    } finally {
+      setFetchLoading(false)
+    }
+  };
+  const getUserMatchTeams = async (matchId, userId) => {
+    setFetchLoading(true)
+    try {
+      const res = await getUserMatchTeam({ matchId, userId });
       const { status, data } = res;
       if (status >= 200 && status <= 300) {
         setUserMatchTeam(data);
@@ -102,26 +120,29 @@ const MatchDetail = () => {
     if (matchId && user?._id) {
       getMatchDetail(matchId);
       getUserMatchTeams(matchId, user?._id)
+      getEventsDetail(matchId)
     }
 
-  }, [matchId,user])
+  }, [matchId, user])
   const homeSelectedPlayer = selectedPlayers?.filter(p => p?.team === match?.home?._id)?.length
   const awaySelectedPlayer = selectedPlayers?.filter(p => p?.team === match?.away?._id)?.length
-  const handleReset=()=>{
+  const handleReset = () => {
     setCaptain(null)
     setViceCaptain(null)
     setSelectedPlayers([])
     setNext(false)
+    setSelectedTeam(null)
+    setTeamNumber(null)
   }
   const handleCreateTeam = async () => {
     setUpdateLoading(true)
     try {
-      const formData={
-        match:matchId,
-        user:user?._id,
-        captain:captain,
-        viceCaptain:viceCaptain,
-        players:selectedPlayers?.map((player) => player?._id),
+      const formData = {
+        match: matchId,
+        user: user?._id,
+        captain: captain,
+        viceCaptain: viceCaptain,
+        players: selectedPlayers?.map((player) => player?._id),
       }
       const res = await addUserTeam(formData);
       const { status, data } = res;
@@ -138,14 +159,20 @@ const MatchDetail = () => {
       setUpdateLoading(false)
     }
   }
-  const handleJoinEvent= async ()=>{
+  const handleJoinEvent = async () => {
     setUpdateLoading(true)
     try {
-     
+      const formData = {
+        match: matchId,
+        user: user?._id,
+        team: selectedTeam,
+        teamNumber: teamNumber,
+        entryFees: Number(match?.entryFees)
+      }
       const res = await joinEvent(formData);
       const { status, data } = res;
       if (status >= 200 && status <= 300) {
-        toast.success(<ToastMsg title={'Created Successfully'} />);
+        toast.success(<ToastMsg title={'Joined  Successfully'} />);
         handleReset()
       } else {
         toast.error(<ToastMsg title={data.message} />);
@@ -156,9 +183,7 @@ const MatchDetail = () => {
       setUpdateLoading(false)
     }
   }
-  const handleSelectTeam=(team)=>{
-    setSelectedTeam(team?._id)
-  }
+
   return (
     <>
       <div className="container py-10">
@@ -189,13 +214,13 @@ const MatchDetail = () => {
             </div>
 
             <div className="flex flex-col items-end gap-1">
-              <button className="btn-primary btn-sm ">Join</button>
+              <button onClick={handleJoinEvent} className="btn-primary btn-sm ">Join</button>
             </div>
           </div>
           <div className="flex items-start gap-1 justify-between mt-4">
             <div>
               <p>Starts at <b>{moment(match?.time)?.format('DD MMM, HH:mm')}</b> </p>
-              <p>Pool Amount  Rs.<b> {numberWithCommas(match?.winningAmount)}</b> </p>
+              <p>Pool Prize  Rs.<b> {numberWithCommas(match?.winningAmount)}</b> </p>
             </div>
             <div>
               <p>Entry Fees  Rs.<b> {match?.entryFees}</b> </p>
@@ -204,18 +229,27 @@ const MatchDetail = () => {
 
           </div>
           <div className="mt-4 flex items-center gap-4">
-            <button onClick={()=>setIsView(false)} className="btn-outline-primary">Create Team</button>
-            <button onClick={()=>setIsView(true)} className="btn-outline-primary">View Team</button>
+            <button onClick={() => setIsView(false)} className={` ${!isView ? 'btn-primary' : 'btn-outline-primary'}`}>Create Team</button>
+            <button onClick={() => setIsView(true)} className={` ${isView ? 'btn-primary' : 'btn-outline-primary'}`}>View Team</button>
           </div>
         </div>
-        {isView ? <div className="grid grid-cols-2 gap-10">
-     
-             {
-            userMatchTeam?.map((item, upperIndex)=>{
-                return (
-                  <div>
-                    <h4 className="heading-4 text-center"> Team {upperIndex+1}</h4>
-                  <div key={item?._id} className="space-y-2 p-6 min-h-[420px] rounded-md bg-green-700 my-4">
+        {isView ? <div className="grid grid-cols-2 gap-10 mt-4">
+          {
+            userMatchTeam?.map((item, upperIndex) => {
+              return (
+                <div>
+                  <h4 className="heading-4 text-center"> Team {upperIndex + 1}</h4>
+                  <div key={item?._id} className="space-y-2 p-6 min-h-[420px] rounded-md bg-green-700 my-4 relative">
+                    <div className="absolute right-2 top-2 flex items-center gap-2">
+                      <span className="font-semibold">Select Team</span>
+                      <div onClick={() => {
+                        setSelectedTeam(prev => prev ? prev === item?._id ? null : item?._id : item?._id)
+                        setTeamNumber(upperIndex + 1)
+                      }} className="w-10 h-10 rounded-full flex-center  bg-white cursor-pointer"> {item?._id === selectedTeam &&
+                        <span className="text-2xl text-green-600">
+                          {reactIcons.check}
+                        </span>}</div>
+                    </div>
                     <div className="flex justify-center gap-3 flex-wrap">
                       {item?.players?.filter((player) => player.role === RoleConstant?.WicketKeeper)?.map((player, index) => (
                         <PreviewPlayer team={item} key={index} player={player} />
@@ -237,14 +271,14 @@ const MatchDetail = () => {
                       ))}
                     </div>
                   </div>
-                  </div>
-                )
-              })
-             }
-           
-         
+                </div>
+              )
+            })
+          }
 
-        </div> :<div className="grid grid-cols-2 gap-10 my-4 ">
+
+
+        </div> : <div className="grid grid-cols-2 gap-10 my-4 ">
           <div className="w-full">
             <div className="flex items-center w-full gap-4 ">
               {Object.keys(RoleConstant)?.map((role) => {
@@ -310,7 +344,7 @@ const MatchDetail = () => {
                   </div>
                   <div className="space-y-1">
                     {selectedPlayers?.map((player, index) => (
-                      <div  key={index} className={`px-4 py-4  flex items-center gap-2 rounded-md cursor-pointer bg-amber-100`}>
+                      <div key={index} className={`px-4 py-4  flex items-center gap-2 rounded-md cursor-pointer bg-amber-100`}>
                         <div className="flex-grow gap-2 flex items-center">
                           <img className="w-10 h-10 object-cover mr-1" src={player.image || '/images/user.png'} alt="user" />
                           <div>
@@ -319,10 +353,10 @@ const MatchDetail = () => {
                           </div>
                         </div>
                         <div className="text-center min-w-[80px] flex justify-center">
-                          <div onClick={() => setCaptain(player?._id)} className={`w-8 h-8  shadow-2xl rounded-full text-sm font-semibold flex-center ${captain === player?._id ? 'bg-green-700 text-white ' :'bg-white'}`} >C</div>
+                          <button disabled={viceCaptain === player?._id} onClick={() => setCaptain(prev => prev === player?._id?null :player?._id)} className={`w-8 h-8  shadow-2xl rounded-full text-sm font-semibold flex-center ${captain === player?._id ? 'bg-green-700 text-white ' : 'bg-white'}`} >C</button>
                         </div>
                         <div className="text-center min-w-[80px] flex justify-center">
-                          <div onClick={() => setViceCaptain(player?._id)} className={`w-8 h-8  shadow-2xl rounded-full text-sm font-semibold flex-center ${viceCaptain === player?._id ? 'bg-green-700 text-white ' : 'bg-white'}`} >VC</div>
+                          <button disabled={captain === player?._id} onClick={() => setViceCaptain(prev => prev === player?._id ? null : player?._id)} className={`w-8 h-8  shadow-2xl rounded-full text-sm font-semibold flex-center ${viceCaptain === player?._id ? 'bg-green-700 text-white ' : 'bg-white'}`} >VC</button>
 
                         </div>
                       </div>
@@ -360,13 +394,31 @@ const MatchDetail = () => {
                 next ? <div className="flex gap-2 items-center">
                   <button onClick={() => setNext(false)} className="btn-primary">View Team</button>
                   <button onClick={handleCreateTeam} className="btn-primary">Create</button>
-                </div> : <button onClick={() => setNext(true)} className="btn-primary">Next</button>
+                  </div> : <button disabled={homeSelectedPlayer+awaySelectedPlayer <11} onClick={() => setNext(true)} className="btn-primary">Next</button>
               }
             </div>
 
 
           </div>
-        </div> }
+        </div>}
+
+        <div className="">
+          <h4 className="heading-4 mb-2">Leaderboard</h4>
+          <ul className="max-w-xl bg-white rounded-md border border-zinc-200 ">
+            {events?.map((event,index) => (
+              <li key={index} className={`px-4 py-4  flex items-center gap-2  cursor-pointer border-b border-b-zinc-200 `}>
+                <div className="flex-grow gap-2 flex items-center">
+                  <img className="w-10 h-10 object-cover mr-1" src={event?.user?.profileImage || '/images/user.png'} alt="user" />
+                  <div>
+                    <p>{event?.user?.fullName} <span className="text-muted text-sm">( Team {event?.teamNumber}</span> ) </p>
+                  </div>
+                </div>
+               
+              </li>
+            ))}
+          
+          </ul>
+        </div>
 
       </div>
     </>

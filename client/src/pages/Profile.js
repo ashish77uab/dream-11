@@ -6,10 +6,8 @@ import ToastMsg from "../components/toast/ToastMsg";
 import { reactIcons } from "../utils/icons";
 import Spinner from "../components/loaders/Spinner";
 import { getUser, uploadProfileImage } from "../api/api";
-import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { setUser, updateUser } from "../redux/features/authSlice";
-import { imageRender } from "../utils/helpers";
-import moment from "moment";
+import { imageRender, numberWithCommas } from "../utils/helpers";
 const LEVEL_POINTS=[
     {
         level: "Bronze",
@@ -145,8 +143,10 @@ const Profile = () => {
                             <p className="md:text-base leading-[1] text-[12px] text-gray-600">
                                 {user?.email}
                             </p>
-                            <p >You have <b>{user?.levelValue||0}</b> points</p>
-                            <p className="text-muted text-sm">Note: Shop more to get more points to unclock your next level</p>
+                            <p className="md:text-base leading-[1] text-[12px] text-gray-600">
+                                <b> Balance:</b> Rs.{numberWithCommas(user?.wallet?.amount||0)}
+                            </p>
+                            <p >You are at <b>{user?.levelValue||0}</b> level</p>
                             <div className=" my-2 ">
                                 {user?.mobile && (
                                     <div className="flex gap-2">
@@ -190,67 +190,14 @@ const Profile = () => {
                             return (
                                 <div key={level} className={`border border-amber-700   rounded-md p-4 md:px-6 px-2 md:p-6 ${user?.levelValue >= level?.points &&'bg-gradient-to-r from-amber-700 to-amber-900 text-white'}`}>
                                     <h3 className="md:text-3xl text-xl text-center font-semibold">{level?.level}</h3>
-                                    <p className="md:text-lg text-base text-center font-semibold">Rewards at : <span className="font-semibold">{level?.points}</span> points</p>
-                                    {user?.levelValue >= level?.points && <p className="text-[12px] opacity-80 text-center font-semibold">You have covered {level?.level}, shop more to reach another level</p>}
+                                    <p className="md:text-lg text-base text-center font-semibold">Rewards at : <span className="font-semibold">{level?.points}</span> level</p>
+                                    {user?.levelValue >= level?.points && <p className="text-[12px] opacity-80 text-center font-semibold">You have covered {level?.level}, play more to reach another level</p>}
                                 </div>
                             ) 
  
                         }))}
 
                     </div>
-                    <div>
-                        <div className=" w-full max-w-2xl">
-                            <div>
-                                <h4 className="md:heading-4  heading-7 inline-block py-2 ">Your Rewards</h4>
-                            </div>
-                            <div className="">
-                                <div className="flex items-center gap-1 py-4 px-4">
-                                    <b className="flex-1">Voucher Name</b>
-                                    <b className="flex-1">Code</b>
-                                    <b className="flex-1">Expired At</b>
-                                    <b className="flex-1"></b>
-                                </div>
-                                <div className="space-y-2">
-                                    {
-                                        user?.vouchers?.map((voucher, index) => {
-                                            const isExpired = moment().isAfter(moment(voucher?.expirationDate));
-                                            const isUsed = voucher?.usedVoucher;
-                                            const showExpiredAndUsed = isUsed || isExpired
-                                            return (
-                                                <div key={index} className={`flex items-center relative gap-1 py-6 bg-amber-200 rounded-md px-4 ${showExpiredAndUsed && ' pointer-events-none'}`}>
-                                                    {isExpired ? <div className="a-center text-red-600 font-bold text-2xl z-10">Expired</div> : isUsed ? <div className="a-center text-red-600 font-bold text-2xl z-10">Used</div>:null}
-                                                    <div className={`flex w-full items-center relative gap-1  ${showExpiredAndUsed && 'opacity-20 select-none  pointer-events-none'}`}>
-                                                        <div className="flex-1">{voucher.name}</div>
-                                                        <b className="flex-1">{voucher.code}</b>
-                                                        <div className="flex-1 text-sm">{moment(voucher?.expirationDate).format('MMM, DD YYYY, hh:mm a')}</div>
-                                                        <div className="flex-1 flex-center">
-                                                            <CopyToClipboard
-                                                                text={voucher.code}
-                                                                onCopy={() => {
-                                                                    setisCopied(true)
-                                                                    setSelectedVoucher(voucher?.code)
-                                                                    setTimeout(() => {
-                                                                        setisCopied(false)
-                                                                    }, 2000);
-                                                                }}>
-                                                                <button className="px-6 flex-center py-[6px] bg-amber-500 text-sm font-semibold rounded-md  text-white">{isCopied && selectedVoucher === voucher?.code ? 'Copied' : 'Copy'} {isCopied && selectedVoucher === voucher?.code && <span className="ml-1">{reactIcons?.check}</span>}  </button>
-                                                            </CopyToClipboard>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                </div>
-
-                                {user?.vouchers?.length === 0 && <div>No vouchers found.</div>}
-
-
-
-                            </div>
-                        </div>
-                    </div>
-
-                    
                 </div>
             </div>
         

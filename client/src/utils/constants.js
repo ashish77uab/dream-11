@@ -16,31 +16,7 @@ export const links = [
     title: "Tournaments",
     icon: reactIcons.list,
   },
-  {
-    path: "products",
-    title: "Products",
-    icon: reactIcons.product,
-  },
-  {
-    path: "orders",
-    title: "Orders",
-    icon: reactIcons.inventory,
-  },
-  {
-    path: "banners",
-    title: "Banners",
-    icon: reactIcons.gallery,
-  },
-  {
-    path: "vouchers",
-    title: "Vouchers",
-    icon: reactIcons.list
-  },
-  {
-    path: "chat-user",
-    title: "Chat User",
-    icon: reactIcons.chat
-  },
+  
 ];
 export const colorsOptions=[
     '#c4b5fd',

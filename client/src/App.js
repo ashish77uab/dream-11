@@ -3,30 +3,15 @@ import "react-toastify/dist/ReactToastify.css";
 import "./index.css";
 import { ToastContainer, toast } from "react-toastify";
 import {
-  AddProduct,
-  AllProducts,
-  AllSubCategory,
-  CartDetail,
   Dashboard,
   ForgotPassword,
   Home,
   Login,
-  OrderDetailsPage,
-  Product,
   MatchDetail,
   Register,
-  ResetPassword,
-  WishlistDetail,
-  Profile,
-  Orders,
-  AllCategories,
-  Banners,
-  AddBanners,
   AllUsers,
-  Vouchers,
-  CreateAndUpdateVoucher,
-  ChatUser,
-  ChatAdmin,
+  ResetPassword,
+  Profile,
   Tournament,
   Teams,
   Match,
@@ -68,36 +53,18 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
-            <Route path="/category/:id" element={<AllSubCategory />} />
             <Route path="/match/:matchId" element={<MatchDetail />} />
-            <Route path="/cart" element={<ProtectedRoutes> <CartDetail /> </ProtectedRoutes>} />
-            <Route path="/wishlist" element={<ProtectedRoutes> <WishlistDetail /></ProtectedRoutes>} />
-            <Route path="/products" element={<AllProducts />} />
-            <Route path="/categories" element={<AllCategories />} />
-            <Route path="/orders" element={<ProtectedRoutes> <OrderDetailsPage /></ProtectedRoutes>} />
             <Route path="/profile/:userId" element={<ProtectedRoutes> <Profile /></ProtectedRoutes>} />
-            <Route path="/chat-admin" element={<ProtectedRoutes> <ChatAdmin  /></ProtectedRoutes>} />
           </Route>
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="tournaments" element={<Tournament />} />
-            <Route path="chat-user" element={<ChatUser />} />
-            <Route path="create/vouchers" element={<CreateAndUpdateVoucher />} />
-            <Route path="update/vouchers/:voucherId" element={<CreateAndUpdateVoucher />} />
-            <Route path="vouchers" element={<Vouchers />} />
             <Route path="users" element={<AllUsers />} />
             <Route path="player/:teamId" element={<Player />} />
             <Route path="teams/:id" element={<Teams />} />
             <Route path="matches/:id" element={<Match />} />
             <Route path="matches/add" element={<AddMatch />} />
             <Route path="matches/update/:matchId" element={<AddMatch />} />
-            <Route path="products" element={<Product />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="products/add" element={<AddProduct />} />
-            <Route path="products/update/:productId" element={<AddProduct />} />
-            <Route path="banners" element={<Banners />} />
-            <Route path="banners/add" element={<AddBanners />} />
-            <Route path="banners/update/:bannerId" element={<AddBanners />} />
           </Route>
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />

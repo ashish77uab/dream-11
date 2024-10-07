@@ -116,8 +116,8 @@ const AddMatch = () => {
             const { status, data } = res;
             if (status >= 200 && status <= 300) {
                 setForm({
-                    home: data?.home,
-                    away: data?.away,
+                    home: data?.home?._id,
+                    away: data?.away?._id,
                     time: moment(data?.time)?.format('YYYY-MM-DDTHH:mm'),
                     tournament: data?.tournament,
                     location: data?.location,
@@ -146,7 +146,7 @@ const AddMatch = () => {
         }
     }, [matchId]);
     useEffect(() => {
-        if (matchId && tournaments && teams && form) {
+        if (tournaments && teams && form) {
             const home = teams?.find(item=>(item?.value === form?.home))
             const away = teams?.find(item=>(item?.value === form?.away))
             const tournament = tournaments?.find(item=>(item?.value === form?.tournament))
@@ -163,7 +163,7 @@ const AddMatch = () => {
 
     }, [matchId, tournaments, teams, form]);
 
-
+console.log(form,'form')
     return (
         <div className="py-10 px-4">
             <form

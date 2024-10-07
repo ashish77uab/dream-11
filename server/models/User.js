@@ -20,6 +20,10 @@ export const userSchema = mongoose.Schema(
       enum: ["Admin", "User", "Vendor"],
       default: "User",
     },
+    wallet: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Wallet",
+    },
     levelValue: { type: Number, default: 0, },
   },
   {

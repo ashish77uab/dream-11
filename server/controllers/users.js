@@ -144,6 +144,7 @@ export const signup = async (req, res) => {
     );
     res.status(201).json({ result, token });
   } catch (error) {
+    console.log(error,'error');
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -173,80 +174,7 @@ export const googleSignIn = async (req, res) => {
 export const getUser = async (req, res) => {
   try {
     const user = req.user;
-    const userData = await User.aggregate([
-      {
-        $match: { _id: mongoose.Types.ObjectId(user.id) },
-      },
-      {
-        $lookup: {
-          from: "orderitems", // Name of the collection you're joining (OrderItem collection)
-          let: { userId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$user", "$$userId"] },
-                    { $eq: ["$isPlaced", false] } // Only include items where isPlaced is false
-                  ],
-                },
-              },
-            },
-          ],
-          as: "carts",
-        },
-      },
-      {
-        $lookup: {
-          from: "wishlistitems", // Name of the collection you're joining
-          localField: "_id",
-          foreignField: "user",
-          as: "whislistItems",
-        },
-      },
-      {
-        $lookup: {
-          from: "vouchers", // Name of the Voucher collection
-          localField: "_id",
-          foreignField: "user",
-          as: "vouchers",
-        },
-      },
-      {
-        $addFields: {
-          vouchers: {
-            $map: {
-              input: "$vouchers", // Loop through each voucher in the array
-              as: "voucher",
-              in: {
-                $mergeObjects: [
-                  "$$voucher", // Keep all existing fields of the voucher
-                  {
-                    usedVoucher: {
-                      $cond: {
-                        if: {
-                          $and: [
-                            { $isArray: "$$voucher.usersUsed" }, // Check if usersUsed is an array
-                            { $gt: [{ $size: "$$voucher.usersUsed" }, 0] }, // Ensure usersUsed array is not empty
-                          ],
-                        },
-                        then: { $in: [mongoose.Types.ObjectId(user.id), "$$voucher.usersUsed"] }, // Check if userId is in usersUsed array
-                        else: false, // If usersUsed is not an array or empty, usedVoucher is false
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-      {
-        $project: {
-          password: 0, 
-        },
-      },
-    ]);
+    const userData = await returnUserData(user);
 
     res.status(200).json(userData[0] || {}); // Send the first (and likely only) result back
   } catch (error) {
@@ -255,13 +183,93 @@ export const getUser = async (req, res) => {
 
   }
 };
-// export const getUser = async (req, res) => {
-//   const user = req.user;
-//   const userData = await User.findById(user.id, { password: 0 })
-//     .populate("carts")
-//     .populate("whislistItems");
-//   res.status(200).json(userData);
-// };
+export const returnUserData= async(user)=>{
+  return await User.aggregate([
+    {
+      $match: { _id: mongoose.Types.ObjectId(user.id) },
+    },
+    {
+      $lookup: {
+        from: "orderitems", // Name of the collection you're joining (OrderItem collection)
+        let: { userId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$user", "$$userId"] },
+                  { $eq: ["$isPlaced", false] } // Only include items where isPlaced is false
+                ],
+              },
+            },
+          },
+        ],
+        as: "carts",
+      },
+    },
+    {
+      $lookup: {
+        from: "wallets", // Name of the collection you're joining
+        localField: "_id",
+        foreignField: "user",
+        as: "wallet",
+      },
+    },
+    {
+      $unwind: "$wallet" // Unwind the array to have a single team object
+    },
+    {
+      $lookup: {
+        from: "wishlistitems", // Name of the collection you're joining
+        localField: "_id",
+        foreignField: "user",
+        as: "whislistItems",
+      },
+    },
+    {
+      $lookup: {
+        from: "vouchers", // Name of the Voucher collection
+        localField: "_id",
+        foreignField: "user",
+        as: "vouchers",
+      },
+    },
+    {
+      $addFields: {
+        vouchers: {
+          $map: {
+            input: "$vouchers", // Loop through each voucher in the array
+            as: "voucher",
+            in: {
+              $mergeObjects: [
+                "$$voucher", // Keep all existing fields of the voucher
+                {
+                  usedVoucher: {
+                    $cond: {
+                      if: {
+                        $and: [
+                          { $isArray: "$$voucher.usersUsed" }, // Check if usersUsed is an array
+                          { $gt: [{ $size: "$$voucher.usersUsed" }, 0] }, // Ensure usersUsed array is not empty
+                        ],
+                      },
+                      then: { $in: [mongoose.Types.ObjectId(user.id), "$$voucher.usersUsed"] }, // Check if userId is in usersUsed array
+                      else: false, // If usersUsed is not an array or empty, usedVoucher is false
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        password: 0,
+      },
+    },
+  ]);
+}
 export const getUsers = async (req, res) => {
   try {
     const userId=req?.user?.id

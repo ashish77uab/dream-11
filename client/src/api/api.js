@@ -70,9 +70,13 @@ export const addUserTeam = (formData) =>
   API.post("match-team/add", formData);
 export const getUserMatchTeam = ({matchId,userId}) =>
   API.get(`match-team/${matchId}/${userId}`);
+export const getEvents = (matchId) =>
+  API.get(`match-team/event/${matchId}`);
 export const deleteUserTeam = (id) => API.delete(`match-team/${id}`);
 export const updateUserTeam = (id, formData) =>
   API.put(`match-team/${id}`, formData);
+export const joinEvent = (formData) =>
+  API.post(`match-team/event`, formData);
 
 
 export const addPlayer = (formData) =>

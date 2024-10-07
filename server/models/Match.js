@@ -56,6 +56,12 @@ const matchSchema = mongoose.Schema(
       default: "Pending",
       required: true,
     },
+    joinedTeams: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Event",
+      }
+    ],
   },
   { timestamps: true }
 );

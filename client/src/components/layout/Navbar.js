@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { getUserToken } from "../../utils/constants";
 import { socketConnect } from "../../api/api";
 import NotificationPopper from "../popper/NotificationPopper";
+import { numberWithCommas } from "../../utils/helpers";
 
 const Navbar = () => {
   let socket
@@ -56,32 +57,10 @@ const Navbar = () => {
           </div>
           <div className="flex gap-2 items-center">
             {user && (
-              <div className="flex items-center md:gap-6 gap-2">
-                <Link
-                  to="/cart"
-                  className="w-10 h-10 rounded-full text-xl bg-zinc-300 flex-center relative"
-                >
-                  {cartLength > 0 && (
-                    <span className="absolute leading-[1] -top-2 -right-2  w-6 h-6 flex-center rounded-full text-sm font-semibold bg-red-600 text-white">
-                      {cartLength}
-                    </span>
-                  )}
-
-                  {reactIcons.cart}
-                </Link>
-                <Link
-                  to="/wishlist"
-                  className="w-10 h-10 rounded-full text-xl bg-pink-100 text-pink-500 flex-center relative"
-                >
-                  {wishlistLength > 0 && (
-                    <span className="absolute leading-[1] -top-2 -right-2  w-6 h-6 flex-center rounded-full text-sm font-semibold bg-pink-600 text-white">
-                      {wishlistLength}
-                    </span>
-                  )}
-
-                  {reactIcons.heartFill}
-                </Link>
-                <NotificationPopper  dispatch={dispatch} />
+              <div className="flex items-center md:gap-4 gap-2">
+                <div>
+                  <div className="md:block hidden"><b>Balance : </b> Rs. {numberWithCommas(user?.wallet?.amount || 0)}</div>
+                </div>
                 <Menu as="div" className="relative">
                   <Menu.Button
                     className={
@@ -97,7 +76,9 @@ const Navbar = () => {
                       }
                       alt=""
                     />
-                    <span className="md:block hidden">{user?.fullName}</span>
+                   <div>
+                      <span className="md:block hidden">{user?.fullName}</span>
+                   </div>
                     <span className="ml-2">{reactIcons?.arrowDown}</span>
                   </Menu.Button>
 
