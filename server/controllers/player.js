@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Player from "../models/Player.js";
 import Team from "../models/Team.js";
+import PlayerStat from "../models/PlayerStat.js";
 export const createPlayer = async (req, res) => {
   try {
     const teamId = req?.body?.team
@@ -37,6 +38,20 @@ export const getPlayer = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+export const getPlayerScore = async (req, res) => {
+  try {
+    let score
+     score = await PlayerStat.find({player:req.params.playerId});
+    
+    if (!score?.[0]) {
+      score[0] = await PlayerStat.create({player:req.params.playerId});
+    }
+    res.status(200).json(score[0]);
+  } catch (error) {
+    console.log(error,'attt')
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
 
 export const getAllPlayer = async (req, res) => {
   try {
@@ -62,6 +77,51 @@ export const getAllPlayer = async (req, res) => {
     res.status(200).json(playerList);
   } catch (error) {
     console.log(error)
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+export const updtePlayerPlayingStatus = async (req, res) => {
+  try {
+    const playerIds = req.body.playerIds; // Array of player IDs
+
+    // Find all players with the provided IDs
+    const players = await Player.find({ _id: { $in: playerIds } });
+
+    if (!players || players.length === 0) {
+      return res.status(404).json({ message: "No players found with the given IDs" });
+    }
+
+    const updatedPlayers = await Promise.all(
+      players.map(player =>
+        Player.findByIdAndUpdate(
+          player._id,
+          { isPlaying: !player.isPlaying },  // Toggle the isPlaying status
+          { new: true }  // Return the updated player document
+        )
+      )
+    );
+
+    // Return the updated player records
+    res.status(200).json({ message: "Players updated successfully", updatedPlayers });
+  } catch (error) {
+    console.error("Error updating player status:", error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+export const updtePlayerScore = async (req, res) => {
+  try {
+    const updatedScore = await PlayerStat.findByIdAndUpdate(
+      req.params.scoreId,
+      {
+        ...req.body
+      },
+      { new: true }
+    );
+
+    if (!updatedScore)
+      return res.status(400).json({ message: "the score cannot be updated!" });
+    res.status(201).json(updatedScore);
+  } catch (error) {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };

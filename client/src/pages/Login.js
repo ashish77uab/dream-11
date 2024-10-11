@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import ToastMsg from "../components/toast/ToastMsg";
-import { login } from "../api/api";
+import { getUser, login } from "../api/api";
 import { Link, useNavigate } from "react-router-dom";
 import { reactIcons } from "./../utils/icons";
 import TextInput from "../components/forms/TextInput";
@@ -29,7 +29,19 @@ const Login = () => {
     setForm({ ...form, [name]: value });
     setError({ ...error, [name]: "" });
   };
-
+  const getUserData = async () => {
+    try {
+      const res = await getUser();
+      const { status, data } = res;
+      if (status >= 200 && status < 300) {
+        dispatch(setUser(data));
+      } else {
+        toast.error(<ToastMsg title={"Something went wrong"} />);
+      }
+    } catch (error) {
+      console.log(error, "error");
+    }
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -44,7 +56,7 @@ const Login = () => {
         localStorage.setItem("ashishToken", data.token);
         handleReset();
         navigate("/");
-        dispatch(setUser(data.result))
+        getUserData()
       } else {
         toast.error(<ToastMsg title={data.message} />);
       }

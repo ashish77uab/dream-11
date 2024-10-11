@@ -87,42 +87,108 @@ export const joinEvent = async (req, res) => {
 export const getEvents = async (req, res) => {
   try {
     const matchId = req.params?.matchId;
-    console.log(matchId, 'matchId')
     const events = await Event.aggregate([
       {
         $match: { match: mongoose.Types.ObjectId(matchId) } // Match by ID
       },
       {
         $lookup: {
-          from: "users", // Collection to join (Team)
-          localField: "user", // Field from Match schema
-          foreignField: "_id", // Field from Team schema
-          as: "user" // Alias for the output (home team details)
+          from: "users", // Join users collection
+          localField: "user", // Field from Event schema
+          foreignField: "_id", // Field from User schema
+          as: "user" // Alias for the output
         }
       },
       {
-        $unwind: "$user" // Unwind the array to get a single home team object
+        $unwind: "$user" // Unwind the array to get a single user object
       },
       {
         $lookup: {
-          from: "userteams", // Collection to join (Team)
-          localField: "team", // Field from Match schema
-          foreignField: "_id", // Field from Team schema
-          as: "team" // Alias for the output (away team details)
+          from: "userteams", // Join userteams collection
+          localField: "team", // Field from Event schema
+          foreignField: "_id", // Field from UserTeam schema
+          as: "team" // Alias for the output
         }
       },
-
       {
-        $unwind: "$team" // Unwind the array to get a single away team object
+        $unwind: "$team" // Unwind the array to get a single team object
       },
+      {
+        $lookup: {
+          from: "players", // Join players collection
+          localField: "team.players", // Field from UserTeam schema (players array)
+          foreignField: "_id", // Field from Player schema
+          as: "team.playerDetails" // Alias for player details
+        }
+      },
+      {
+        $lookup: {
+          from: "players", // Join players collection
+          localField: "team.players", // Field from UserTeam schema (players array)
+          foreignField: "_id", // Field from Player schema
+          as: "team.playerDetails" // Alias for player details
+        }
+      },
+      {
+        $lookup: {
+          from: "playerscores", // Join playerscores collection
+          localField: "team.players", // Field from UserTeam schema (players array)
+          foreignField: "player", // Field from PlayerScore schema
+          as: "team.playerScores" // Alias for player scores
+        }
+      },
+      {
+        $addFields: {
+          "team.players": {
+            $map: {
+              input: "$team.playerDetails", // Iterate over playerDetails array
+              as: "playerDetail", // Alias for each player detail
+              in: {
+                $mergeObjects: [
+                  "$$playerDetail", // Player details object
+                  {
+                    // Find the matching player score by player ID
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: "$team.playerScores", // Array of player scores
+                          as: "playerScore", // Alias for each player score
+                          cond: { $eq: ["$$playerScore.player", "$$playerDetail._id"] } // Match by player ID
+                        }
+                      },
+                      0 // Return the first matched player score
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          match: 1,
+          user: 1,
+          teamNumber: 1,
+          "team._id": 1,
+          "team.captain": 1,
+          "team.viceCaptain": 1,
+          "team.players": 1 // Now this contains playerDetails merged with playerScores
+        }
+      }
     ]);
 
-    res.status(200).json(events); // Return the first and only match
+    res.status(200).json(events); // Return the populated events
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
+
+
 export const updateUserTeam = async (req, res) => {
   try {
     const userTeam = await UserTeam.findByIdAndUpdate(

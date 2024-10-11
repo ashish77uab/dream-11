@@ -88,6 +88,12 @@ export const getAllPlayer = ({ id }) =>
   API.get(`player/all/${id}`);
 export const getPlayer = (id) =>
   API.get(`player/${id}`);
+export const updatePlayerPlayingStatus = (data) =>
+  API.put(`player/playing`, data);
+export const updatePlayerScore = (scoreId,data) =>
+  API.put(`player/score/${scoreId}`, data);
+export const getPlayerScore = (playerId) =>
+  API.get(`player/score/${playerId}`);
 
 // wishlist
 export const addToWishList = (formData) => API.post("wishlist/add", formData);

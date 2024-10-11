@@ -8,16 +8,17 @@ import moment from "moment";
 import { RoleConstant } from "../utils/constants";
 import { reactIcons } from "../utils/icons";
 import { useSelector } from "react-redux";
+import ViewUserTeam from "../components/modals/ViewUserTeam";
 
-const PreviewPlayer = ({ player, team }) => {
+ const PreviewPlayer = ({ player, team }) => {
   return (
     <div className=" flex flex-col text-center items-center w-20 relative ">
       {team && (
         <>
-          {team?.captain === player?._id && <div className="absolute top-0 right-0 w-6 h-6 rounded-full flex-center bg-white text-xs font-semibold">
+          {team?.captain === player?._id && <div className="absolute top-[-10px] right-[-6px] w-6 h-6 rounded-full flex-center bg-black text-white text-xs font-semibold">
             <div> C</div>
           </div>}
-          {team?.viceCaptain === player?._id && <div className="absolute top-0 right-0 w-6 h-6 rounded-full flex-center bg-white text-xs font-semibold">
+          {team?.viceCaptain === player?._id && <div className="absolute top-[-10px] right-[-6px] w-6 h-6 rounded-full flex-center bg-black text-white text-xs font-semibold">
             <div>VC</div>
           </div>}
 
@@ -32,6 +33,11 @@ const PreviewPlayer = ({ player, team }) => {
   )
 }
 const MatchDetail = () => {
+  const [isUserTeamPreviewOpen, setIsUserTeamPreviewOpen] = useState(false)
+  const [userTeamPreviewData, setUserTeamPreviewData] = useState({
+    item:'',
+    user:''
+  })
   const [isView, setIsView] = useState(false)
   const { user } = useSelector(state => state?.auth)
   const [captain, setCaptain] = useState(null)
@@ -239,7 +245,7 @@ const MatchDetail = () => {
               return (
                 <div>
                   <h4 className="heading-4 text-center"> Team {upperIndex + 1}</h4>
-                  <div key={item?._id} className="space-y-2 p-6 min-h-[420px] rounded-md bg-green-700 my-4 relative">
+                  <div key={item?._id} className="space-y-4 p-6 min-h-[440px] rounded-md bg-green-700 my-4 relative">
                     <div className="absolute right-2 top-2 flex items-center gap-2">
                       <span className="font-semibold">Select Team</span>
                       <div onClick={() => {
@@ -250,22 +256,22 @@ const MatchDetail = () => {
                           {reactIcons.check}
                         </span>}</div>
                     </div>
-                    <div className="flex justify-center gap-3 flex-wrap">
+                    <div className="flex justify-center gap-4 flex-wrap">
                       {item?.players?.filter((player) => player.role === RoleConstant?.WicketKeeper)?.map((player, index) => (
                         <PreviewPlayer team={item} key={index} player={player} />
                       ))}
                     </div>
-                    <div className="flex justify-center gap-3 flex-wrap">
+                    <div className="flex justify-center gap-4 flex-wrap">
                       {item?.players?.filter((player) => player.role === RoleConstant?.Batsman)?.map((player, index) => (
                         <PreviewPlayer team={item} key={index} player={player} />
                       ))}
                     </div>
-                    <div className="flex justify-center gap-3 flex-wrap">
+                    <div className="flex justify-center gap-4 flex-wrap">
                       {item?.players?.filter((player) => player.role === RoleConstant?.AllRounder)?.map((player, index) => (
                         <PreviewPlayer team={item} key={index} player={player} />
                       ))}
                     </div>
-                    <div className="flex justify-center gap-3 flex-wrap">
+                    <div className="flex justify-center gap-4 flex-wrap">
                       {item?.players?.filter((player) => player.role === RoleConstant?.Bowler)?.map((player, index) => (
                         <PreviewPlayer team={item} key={index} player={player} />
                       ))}
@@ -303,6 +309,10 @@ const MatchDetail = () => {
                       <div>
                         <p>{player.name}</p>
                         <p className="text-xs text-muted">selected by {player?.selectedPercentage || 0}%</p>
+                       <div className="flex items-center gap-1">
+                          <div className={`${player.isPlaying ? 'bg-green-500' : 'bg-red-500'} w-[10px] h-[10px] rounded-full`}></div>
+                          <div className="text-xs text-muted">{player.isPlaying?'playing' :'not-playing'}</div>
+                       </div>
                       </div>
                     </div>
                     <div className="text-center min-w-[80px]">{player?.points}</div>
@@ -406,7 +416,13 @@ const MatchDetail = () => {
           <h4 className="heading-4 mb-2">Leaderboard</h4>
           <ul className="max-w-xl bg-white rounded-md border border-zinc-200 ">
             {events?.map((event,index) => (
-              <li key={index} className={`px-4 py-4  flex items-center gap-2  cursor-pointer border-b border-b-zinc-200 `}>
+              <li onClick={()=>{
+                setUserTeamPreviewData({
+                  item: event?.team,
+                  user:event?.user
+                })
+                setIsUserTeamPreviewOpen(true)
+              }} key={index} className={`px-4 py-4  flex items-center gap-2  cursor-pointer border-b border-b-zinc-200 `}>
                 <div className="flex-grow gap-2 flex items-center">
                   <img className="w-10 h-10 object-cover mr-1" src={event?.user?.profileImage || '/images/user.png'} alt="user" />
                   <div>
@@ -421,6 +437,14 @@ const MatchDetail = () => {
         </div>
 
       </div>
+      <ViewUserTeam
+       isOpen={isUserTeamPreviewOpen}
+        item={userTeamPreviewData?.item}
+        user={userTeamPreviewData?.user}
+        closeModal={()=>{
+          setIsUserTeamPreviewOpen(false)
+        }}
+        />
     </>
   );
 };

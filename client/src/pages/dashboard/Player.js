@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
-import {  deletePlayer, getAllPlayer } from "../../api/api";
+import { deletePlayer, getAllPlayer, updatePlayerPlayingStatus } from "../../api/api";
 import { toast } from "react-toastify";
 import ToastMsg from "../../components/toast/ToastMsg";
-import { imageRender } from "../../utils/helpers";
 import ActionButton from "../../components/button/ActionButton";
 import { reactIcons } from "../../utils/icons";
 import DeleteButton from "../../components/button/DeleteButton";
 import DeleteConfirmation from "../../components/modals/DeleteConfirmation";
 import { useLocation, useParams } from "react-router-dom";
-import AddTeam from "../../components/modals/AddTeam";
 import RenderNoData from "../../components/layout/RenderNoData";
 import AddPlayer from "../../components/modals/AddPlayer";
+import TextInput from "../../components/forms/TextInput";
+import UpdatePlayerScore from "../../components/modals/UpdatePlayerScore";
 
 const Player = () => {
   const [loading,setLoading]=useState(false)
@@ -21,7 +21,16 @@ const Player = () => {
   const [isAddNewOpen, setIsAddNewOpen] = useState(false);
   const [players, setPlayers] = useState(null);
   const [fetchLoading, setFetchLoading] = useState(false);
-
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [playerIds, setPlayerIds] = useState([]);
+  const [playerId, setPlayerId] = useState(null);
+  const [isPlayerScoreUpdateOpen, setIsPlayerScoreUpdateOpen] = useState(false);
+const isInlcudes=(id)=>{
+  return playerIds.includes(id)
+}
+const handlePlayerSelect=(playerId)=>{
+  setPlayerIds(prevIds=>isInlcudes(playerId)?prevIds.filter(id=>id!==playerId):[...prevIds,playerId])
+}
   const getAllPlayerData = async () => {
     setFetchLoading(true)
     try {
@@ -38,11 +47,32 @@ const Player = () => {
       setFetchLoading(false)
     }
   };
+  const handleUpdatePlayerPlayingStatus= async()=>{
+    setUpdateLoading(true)
+    try {
+      const res = await updatePlayerPlayingStatus({ playerIds: playerIds });
+      const { status, data } = res;
+      if (status >= 200 && status <= 300) {
+        toast.success(<ToastMsg title="Status Updated Successfully" />);
+        setPlayerIds([]);
+        getAllPlayerData();
+      } else {
+        toast.error(<ToastMsg title={data.message} />);
+      }
+    } catch (error) {
+      toast.error(<ToastMsg title={error?.response?.data?.message} />);
+    }finally{
+      setUpdateLoading(false)
+    }
+  }
+  const handleUpdatePlayerScore = (player)=>{
+    setIsPlayerScoreUpdateOpen(true)
+    setPlayerId(player?._id)
+  }
 
   useEffect(() => {
     if (teamId){
       getAllPlayerData();
-
     }
   }, [teamId]);
 
@@ -71,12 +101,22 @@ const Player = () => {
           <h3 className="heading-3">
             All players of {location?.state?.name}{" "}
           </h3>
+          <div className="flex items-center gap-4">
+            {playerIds?.length !== 0 && <button
+              onClick={handleUpdatePlayerPlayingStatus}
+              className="btn-primary"
+              disabled={playerIds?.length===0}
+            >
+              Update Player Status
+            </button>}
+
           <button
             onClick={() => setIsAddNewOpen(true)}
             className="btn-primary"
           >
             Add New Player{" "}
           </button>
+          </div>
         </header>
         <div>
           <div className="overflow-x-auto w-full">
@@ -87,16 +127,31 @@ const Player = () => {
                   <th>Name</th>
                   <th>Team</th>
                   <th>Role</th>
+                  <th>Playing Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {players?.map((player, index) => (
                   <tr>
-                    <td className="w-[80px]">{index + 1}</td>
+                    <td className="w-[80px] ">
+                      <div className="flex items-center gap-2">
+                      {index + 1}
+                      <input
+                        checked={isInlcudes(player?._id)}
+                        onChange={(e) => {
+                          handlePlayerSelect(player?._id)
+                        }}
+                        className="w-5 h-5 accent-amber-500"
+                        type="checkbox"
+                      />
+                        
+                      </div>
+                      </td>
                     <td>{player.name}</td>
                     <td>{player.team?.name}</td>
                     <td>{player.role}</td>
+                    <td className={`${player.isPlaying ? 'text-green-600' : 'text-red-500'}`}>{player.isPlaying ? 'Playing' :'Not Playing'}</td>
                    
                     <td>
                       <div className="flex justify-center gap-2">
@@ -116,6 +171,7 @@ const Player = () => {
                         >
                           {reactIcons.delete}
                         </DeleteButton>
+                        <button onClick={() => handleUpdatePlayerScore(player)} className="btn-outline-primary px-4 text-sm">  Update Player Score</button>
                       </div>
                     </td>
                   </tr>
@@ -144,6 +200,14 @@ const Player = () => {
         handleDelete={handleDelete}
         title={"Player"}
         loading={loading}
+      />
+      <UpdatePlayerScore
+        isOpen={isPlayerScoreUpdateOpen}
+        playerId={playerId}
+        closeModal={() => {
+          setIsPlayerScoreUpdateOpen(false)
+          setPlayerId(null)
+        }}
       />
     </>
   );
