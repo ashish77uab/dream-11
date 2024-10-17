@@ -197,11 +197,11 @@ export const getEvents = async (req, res) => {
                   {
                     totalPoints: {
                       $cond: {
-                        if: { $eq: ["$$player._id", "$team.captain"] }, // Check if the player is the captain
+                        if: { $eq: [{ $toObjectId: "$$player.player" }, { $toObjectId: "$team.captain" }] }, // Check if the player is the captain
                         then: { $multiply: ["$$player.totalPoints", 2] }, // Double the points for captain
                         else: {
                           $cond: {
-                            if: { $eq: ["$$player._id", "$team.viceCaptain"] }, // Check if the player is the vice-captain
+                            if: { $eq: [{ $toObjectId: "$$player.player" }, { $toObjectId: "$team.viceCaptain" }] }, // Check if the player is the vice-captain
                             then: { $multiply: ["$$player.totalPoints", 1.5] }, // 1.5x points for vice-captain
                             else: "$$player.totalPoints" // Regular points for other players
                           }

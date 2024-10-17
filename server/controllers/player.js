@@ -47,6 +47,79 @@ export const getPlayerScore = async (req, res) => {
     if (!score?.[0]) {
       score[0] = await PlayerStat.create({player:req.params.playerId});
     }
+   
+
+    res.status(200).json(score[0]);
+  } catch (error) {
+    console.log(error,'attt')
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getAllPlayer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const playerList = await Player.aggregate([
+      {
+        $match: { team: mongoose.Types.ObjectId(id) } // Match team ID
+      },
+      {
+        $lookup: {
+          from: "teams", // The Team collection
+          localField: "team", // Field from Player schema
+          foreignField: "_id", // Field from Team schema
+          as: "team" // Alias for the team details
+        }
+      },
+      {
+        $unwind: "$team" // Unwind the array of team details
+      },
+     
+    ]);
+
+    res.status(200).json(playerList);
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+export const updtePlayerPlayingStatus = async (req, res) => {
+  try {
+    const playerIds = req.body.playerIds; // Array of player IDs
+
+    // Find all players with the provided IDs
+    const players = await Player.find({ _id: { $in: playerIds } });
+
+    if (!players || players.length === 0) {
+      return res.status(404).json({ message: "No players found with the given IDs" });
+    }
+
+    const updatedPlayers = await Promise.all(
+      players.map(player =>
+        Player.findByIdAndUpdate(
+          player._id,
+          { isPlaying: !player.isPlaying },  // Toggle the isPlaying status
+          { new: true }  // Return the updated player document
+        )
+      )
+    );
+
+    // Return the updated player records
+    res.status(200).json({ message: "Players updated successfully", updatedPlayers });
+  } catch (error) {
+    console.error("Error updating player status:", error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+export const updtePlayerScore = async (req, res) => {
+  try {
+    const updatedScore = await PlayerStat.findByIdAndUpdate(
+      req.params.scoreId,
+      {
+        ...req.body
+      },
+      { new: true }
+    );
     const events = await Event.aggregate([
       {
         $lookup: {
@@ -143,11 +216,11 @@ export const getPlayerScore = async (req, res) => {
                   {
                     totalPoints: {
                       $cond: {
-                        if: { $eq: ["$$player._id", "$team.captain"] }, // Check if the player is the captain
+                        if: { $eq: [{ $toString: "$$player.player" }, { $toString: "$team.captain" }] }, // Check if the player is the captain
                         then: { $multiply: ["$$player.totalPoints", 2] }, // Double the points for captain
                         else: {
                           $cond: {
-                            if: { $eq: ["$$player._id", "$team.viceCaptain"] }, // Check if the player is the vice-captain
+                            if: { $eq: [{ $toString: "$$player.player" }, { $toString: "$team.viceCaptain" }] }, // Check if the player is the vice-captain
                             then: { $multiply: ["$$player.totalPoints", 1.5] }, // 1.5x points for vice-captain
                             else: "$$player.totalPoints" // Regular points for other players
                           }
@@ -188,87 +261,16 @@ export const getPlayerScore = async (req, res) => {
         }
       }
     ]);
-    if(events?.length>0){
-      events?.forEach(async (event,index)=>{
+    if (events?.length > 0) {
+      events?.forEach(async (event, index) => {
         await Event.findOneAndUpdate({ team: event?.team?._id }, {
-          teamRank:index+1,
+          teamRank: index + 1,
           teamScore: event?.team?.totalPoints
-})
+        })
       })
 
     }
-
-    res.status(200).json(score[0]);
-  } catch (error) {
-    console.log(error,'attt')
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-export const getAllPlayer = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const playerList = await Player.aggregate([
-      {
-        $match: { team: mongoose.Types.ObjectId(id) } // Match team ID
-      },
-      {
-        $lookup: {
-          from: "teams", // The Team collection
-          localField: "team", // Field from Player schema
-          foreignField: "_id", // Field from Team schema
-          as: "team" // Alias for the team details
-        }
-      },
-      {
-        $unwind: "$team" // Unwind the array of team details
-      },
-     
-    ]);
-
-    res.status(200).json(playerList);
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-export const updtePlayerPlayingStatus = async (req, res) => {
-  try {
-    const playerIds = req.body.playerIds; // Array of player IDs
-
-    // Find all players with the provided IDs
-    const players = await Player.find({ _id: { $in: playerIds } });
-
-    if (!players || players.length === 0) {
-      return res.status(404).json({ message: "No players found with the given IDs" });
-    }
-
-    const updatedPlayers = await Promise.all(
-      players.map(player =>
-        Player.findByIdAndUpdate(
-          player._id,
-          { isPlaying: !player.isPlaying },  // Toggle the isPlaying status
-          { new: true }  // Return the updated player document
-        )
-      )
-    );
-
-    // Return the updated player records
-    res.status(200).json({ message: "Players updated successfully", updatedPlayers });
-  } catch (error) {
-    console.error("Error updating player status:", error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-export const updtePlayerScore = async (req, res) => {
-  try {
-    const updatedScore = await PlayerStat.findByIdAndUpdate(
-      req.params.scoreId,
-      {
-        ...req.body
-      },
-      { new: true }
-    );
+    console.log(events,'events')
 
     if (!updatedScore)
       return res.status(400).json({ message: "the score cannot be updated!" });
