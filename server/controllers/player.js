@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Player from "../models/Player.js";
 import Team from "../models/Team.js";
 import PlayerStat from "../models/PlayerStat.js";
+import Event from "../models/Event.js";
 export const createPlayer = async (req, res) => {
   try {
     const teamId = req?.body?.team
@@ -46,6 +47,157 @@ export const getPlayerScore = async (req, res) => {
     if (!score?.[0]) {
       score[0] = await PlayerStat.create({player:req.params.playerId});
     }
+    const events = await Event.aggregate([
+      {
+        $lookup: {
+          from: "userteams", // Join userteams collection
+          localField: "team", // Field from Event schema
+          foreignField: "_id", // Field from UserTeam schema
+          as: "team" // Alias for the output
+        }
+      },
+      {
+        $unwind: "$team" // Unwind the array to get a single team object
+      },
+      {
+        $lookup: {
+          from: "players", // Join players collection
+          localField: "team.players", // Field from UserTeam schema (players array)
+          foreignField: "_id", // Field from Player schema
+          as: "team.playerDetails" // Alias for player details
+        }
+      },
+      {
+        $lookup: {
+          from: "playerscores", // Join playerscores collection
+          localField: "team.players", // Field from UserTeam schema (players array)
+          foreignField: "player", // Field from PlayerScore schema
+          as: "team.playerScores" // Alias for player scores
+        }
+      },
+      {
+        $addFields: {
+          "team.players": {
+            $map: {
+              input: "$team.playerDetails", // Iterate over playerDetails array
+              as: "playerDetail", // Alias for each player detail
+              in: {
+                $mergeObjects: [
+                  "$$playerDetail", // Player details object
+                  {
+                    // Find the matching player score by player ID
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: "$team.playerScores", // Array of player scores
+                          as: "playerScore", // Alias for each player score
+                          cond: { $eq: ["$$playerScore.player", "$$playerDetail._id"] } // Match by player ID
+                        }
+                      },
+                      0 // Return the first matched player score
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      // Add the total points for each player
+      {
+        $addFields: {
+          "team.players": {
+            $map: {
+              input: "$team.players",
+              as: "player",
+              in: {
+                $mergeObjects: [
+                  "$$player",
+                  {
+                    totalPoints: {
+                      $add: [
+                        { $multiply: ["$$player.run", 1] }, // Points for runs
+                        { $multiply: ["$$player.wicket", 20] }, // Points for wickets
+                        { $multiply: ["$$player.catch", 8] }, // Points for catches
+                        { $multiply: ["$$player.stumping", 10] }, // Points for stumpings
+                        { $multiply: ["$$player.runOut", 6] } // Points for run-outs
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      // Apply captain and vice-captain bonuses
+      {
+        $addFields: {
+          "team.players": {
+            $map: {
+              input: "$team.players",
+              as: "player",
+              in: {
+                $mergeObjects: [
+                  "$$player",
+                  {
+                    totalPoints: {
+                      $cond: {
+                        if: { $eq: ["$$player._id", "$team.captain"] }, // Check if the player is the captain
+                        then: { $multiply: ["$$player.totalPoints", 2] }, // Double the points for captain
+                        else: {
+                          $cond: {
+                            if: { $eq: ["$$player._id", "$team.viceCaptain"] }, // Check if the player is the vice-captain
+                            then: { $multiply: ["$$player.totalPoints", 1.5] }, // 1.5x points for vice-captain
+                            else: "$$player.totalPoints" // Regular points for other players
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          "team.totalPoints": {
+            $sum: "$team.players.totalPoints" // Sum of all player totalPoints
+          }
+        }
+      },
+      // Sort players by totalPoints in descending order
+      {
+        $sort: {
+          "team.totalPoints": -1 // Sort by total points, descending
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          match: 1,
+          user: 1,
+          teamNumber: 1,
+          "team._id": 1,
+          "team.captain": 1,
+          "team.viceCaptain": 1,
+          "team.players": 1,
+          "team.totalPoints": 1,
+        }
+      }
+    ]);
+    if(events?.length>0){
+      events?.forEach(async (event,index)=>{
+        await Event.findOneAndUpdate({ team: event?.team?._id }, {
+          teamRank:index+1,
+          teamScore: event?.team?.totalPoints
+})
+      })
+
+    }
+
     res.status(200).json(score[0]);
   } catch (error) {
     console.log(error,'attt')

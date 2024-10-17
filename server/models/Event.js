@@ -21,6 +21,16 @@ const eventSchema = mongoose.Schema(
        default:1,
       required: true,
     },
+    teamRank:{
+      type: Number,
+      required: true,
+      default:1
+    },
+    teamScore:{
+      type: Number,
+      required: true,
+      default:0
+    }
    
   },
   { timestamps: true }

@@ -415,6 +415,11 @@ const MatchDetail = () => {
         <div className="">
           <h4 className="heading-4 mb-2">Leaderboard</h4>
           <ul className="max-w-xl bg-white rounded-md border border-zinc-200 ">
+            <div className="flex gap-2 px-4 py-2">
+                <div className="flex-grow">Player</div>
+                <div className="text-center min-w-[80px]">Points</div>
+                <div className="text-center min-w-[80px]">Ranks</div>
+              </div>
             {events?.map((event,index) => (
               <li onClick={()=>{
                 setUserTeamPreviewData({
@@ -426,8 +431,16 @@ const MatchDetail = () => {
                 <div className="flex-grow gap-2 flex items-center">
                   <img className="w-10 h-10 object-cover mr-1" src={event?.user?.profileImage || '/images/user.png'} alt="user" />
                   <div>
-                    <p>{event?.user?.fullName} <span className="text-muted text-sm">( Team {event?.teamNumber}</span> ) </p>
+                    <p>{event?.user?.fullName} <span className="text-muted text-sm">( T{event?.teamNumber}</span> ) </p>
                   </div>
+                </div>
+                <div className="flex  text-center flex-col gap-2 min-w-[80px]">
+                  <div>
+                    <b className="text-gray-700 mr-1">{event?.teamScore} pts</b> 
+                  </div>
+                </div>
+                <div className="flex text-center  flex-col gap-2 min-w-[80px]">
+                  <b className="text-gray-700 mr-1">{event?.teamRank}</b> 
                 </div>
                
               </li>

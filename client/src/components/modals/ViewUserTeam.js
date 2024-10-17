@@ -2,64 +2,17 @@ import React from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import { RoleConstant } from "../../utils/constants";
-const Points={
-  catch: 8,
-  run: 1,
-  runOut: 6,
-  stumping: 10,
-  wicket: 20,
-}
-const calculatePoints=(key,value,c,vc)=>{
-  let score = 0;
-  switch (key) {
-    case 'catch':
-      score = value * Points[key];
-      break;
-    case 'run':
-      score = value * Points[key];
-      break;
-    case 'runOut':
-      score = value * Points[key];
-      break;
-    case 'stumping':
-      score = value * Points[key];
-      break;
-    case 'wicket':
-      score = value * Points[key];
-      break;
-    default:
-      break;
-  }
-  if(c){
-    score=score * 2
-    console.log('captain', score)
-  }else if(vc){
-    
-    score = score * 1.5
-    console.log('vc', score)
-  }
-  return score;  // Return the calculated score for the given key and value
-}
 
 const PreviewPlayer = ({ player, team }) => {
   const isCapatin = team?.captain === player?.player || team?.captain === player?._id
   const isViceCaptain = team?.viceCaptain === player?.player || team?.viceCaptain === player?._id
-  const renderPlayerScore = (player) => {
-    
-    let tempObj={
-      catch:player?.catch||0,
-      run:player?.run||0,
-      runOut:player?.runOut||0,
-      stumping:player?.stumping||0,
-      wicket:player?.wicket||0,
-    }
-    let TotalScore=0; 
-    Object.keys(tempObj)?.forEach((key)=>{
-      let score = calculatePoints(key, tempObj[key], isCapatin, isViceCaptain)  
-      TotalScore += score
-    })
-    return TotalScore
+  let points = player?.totalPoints
+  if(isCapatin){
+    points=points*2
+  }else if(isViceCaptain){
+    points=points*1.5
   }
+
   return (
     <div className=" flex flex-col text-center items-center w-20 relative ">
       {team && (
@@ -76,14 +29,13 @@ const PreviewPlayer = ({ player, team }) => {
       <img className="w-10 h-10 object-cover mr-1" src={player.image || '/images/user.png'} alt="user" />
       <div>
         <p className="text-[12px] line-clamp-1 bg-black p-1 text-white rounded-sm">{player.name}</p>
-        <div className="text-sm text-white font-semibold">{renderPlayerScore(player)} cr</div>
+        <div className="text-sm text-white font-semibold">{player?.totalPoints||0} cr</div>
       </div>
     </div>
   )
 }
 
 const ViewUserTeam = ({ isOpen, closeModal, item, user }) => {
-  console.log(item, user, 'data in modal')
 
   const handleReset = () => {
     closeModal();

@@ -123,14 +123,6 @@ export const getEvents = async (req, res) => {
       },
       {
         $lookup: {
-          from: "players", // Join players collection
-          localField: "team.players", // Field from UserTeam schema (players array)
-          foreignField: "_id", // Field from Player schema
-          as: "team.playerDetails" // Alias for player details
-        }
-      },
-      {
-        $lookup: {
           from: "playerscores", // Join playerscores collection
           localField: "team.players", // Field from UserTeam schema (players array)
           foreignField: "player", // Field from PlayerScore schema
@@ -165,16 +157,90 @@ export const getEvents = async (req, res) => {
           }
         }
       },
+      // Add the total points for each player
+      {
+        $addFields: {
+          "team.players": {
+            $map: {
+              input: "$team.players",
+              as: "player",
+              in: {
+                $mergeObjects: [
+                  "$$player",
+                  {
+                    totalPoints: {
+                      $add: [
+                        { $multiply: ["$$player.run", 1] }, // Points for runs
+                        { $multiply: ["$$player.wicket", 20] }, // Points for wickets
+                        { $multiply: ["$$player.catch", 8] }, // Points for catches
+                        { $multiply: ["$$player.stumping", 10] }, // Points for stumpings
+                        { $multiply: ["$$player.runOut", 6] } // Points for run-outs
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      // Apply captain and vice-captain bonuses
+      {
+        $addFields: {
+          "team.players": {
+            $map: {
+              input: "$team.players",
+              as: "player",
+              in: {
+                $mergeObjects: [
+                  "$$player",
+                  {
+                    totalPoints: {
+                      $cond: {
+                        if: { $eq: ["$$player._id", "$team.captain"] }, // Check if the player is the captain
+                        then: { $multiply: ["$$player.totalPoints", 2] }, // Double the points for captain
+                        else: {
+                          $cond: {
+                            if: { $eq: ["$$player._id", "$team.viceCaptain"] }, // Check if the player is the vice-captain
+                            then: { $multiply: ["$$player.totalPoints", 1.5] }, // 1.5x points for vice-captain
+                            else: "$$player.totalPoints" // Regular points for other players
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          "team.totalPoints": {
+            $sum: "$team.players.totalPoints" // Sum of all player totalPoints
+          }
+        }
+      },
+      // Sort players by totalPoints in descending order
+      {
+        $sort: {
+          "team.totalPoints": -1 // Sort by total points, descending
+        }
+      },
       {
         $project: {
           _id: 1,
           match: 1,
           user: 1,
           teamNumber: 1,
+          teamRank: 1,
+          teamScore: 1,
           "team._id": 1,
           "team.captain": 1,
           "team.viceCaptain": 1,
-          "team.players": 1 // Now this contains playerDetails merged with playerScores
+          "team.players": 1 ,
+          "team.totalPoints": 1 ,
         }
       }
     ]);
