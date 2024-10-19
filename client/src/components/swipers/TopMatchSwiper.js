@@ -4,7 +4,7 @@ const TopMatchSwiper = ({ data }) => {
   return (
     <>
       {data.map((match) => (
-        <MatchCard match={match} />
+        <MatchCard key={match?._id} match={match} />
       ))}
      
     </>

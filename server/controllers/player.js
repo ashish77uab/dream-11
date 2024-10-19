@@ -262,15 +262,33 @@ export const updtePlayerScore = async (req, res) => {
       }
     ]);
     if (events?.length > 0) {
-      events?.forEach(async (event, index) => {
-        await Event.findOneAndUpdate({ team: event?.team?._id }, {
-          teamRank: index + 1,
-          teamScore: event?.team?.totalPoints
-        })
-      })
+      let currentRank = 1;  // Track the current rank
+      let previousPoints = null;  // Track the previous team's total points
+      let rankSkip = 0; // For skipping ranks if teams have the same points
 
+      events?.forEach(async (event, index) => {
+        // Check if the current team's totalPoints are equal to the previous team's
+        if (previousPoints === event?.team?.totalPoints) {
+          rankSkip++;  // Increment rank skip because this team has the same points
+        } else {
+          // If points are different, update rank and reset rank skip
+          currentRank += rankSkip; // Apply rank skip
+          rankSkip = 1;  // Reset rank skip to 1 for the next team with the same points
+        }
+
+        // Update the previousPoints to the current team's totalPoints
+        previousPoints = event?.team?.totalPoints;
+
+        // Update the team with the correct rank and score
+        await Event.findOneAndUpdate(
+          { team: event?.team?._id },
+          {
+            teamRank: currentRank,  // Set the rank
+            teamScore: event?.team?.totalPoints  // Set the team's total score
+          }
+        );
+      });
     }
-    console.log(events,'events')
 
     if (!updatedScore)
       return res.status(400).json({ message: "the score cannot be updated!" });

@@ -222,12 +222,12 @@ export const getEvents = async (req, res) => {
           }
         }
       },
-      // Sort players by totalPoints in descending order
       {
-        $sort: {
-          "team.totalPoints": -1 // Sort by total points, descending
+        $addFields: {
+          isCurrentUser: { $eq: ["$user._id", mongoose.Types.ObjectId(req?.user?.id)] }
         }
       },
+      // Sort players by totalPoints in descending order
       {
         $project: {
           _id: 1,
@@ -241,6 +241,13 @@ export const getEvents = async (req, res) => {
           "team.viceCaptain": 1,
           "team.players": 1 ,
           "team.totalPoints": 1 ,
+          isCurrentUser: 1 
+        }
+      },
+      {
+        $sort: {
+          isCurrentUser: -1, // Show the logged-in user first
+          "team.totalPoints": -1 // Then sort by total points (descending)
         }
       }
     ]);

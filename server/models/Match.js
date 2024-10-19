@@ -22,6 +22,10 @@ const matchSchema = mongoose.Schema(
       ref: "Tournament",
       required: true,
     },
+    prize: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PrizePyramid",
+    },
     location: {
       type: String,
     },
@@ -32,6 +36,10 @@ const matchSchema = mongoose.Schema(
       required: true,
     },
     isTop: {
+      type: Boolean,
+      default: false,
+    },
+    isDistributed: {
       type: Boolean,
       default: false,
     },

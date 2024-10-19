@@ -27,6 +27,10 @@ const playerStatsSchema = mongoose.Schema(
       ref: "Player",
       required: true,
     },
+    match: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Match",
+    },
   },
   { timestamps: true }
 );

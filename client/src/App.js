@@ -17,6 +17,8 @@ import {
   Match,
   AddMatch,
   Player,
+  PrizePyramidList,
+  AddPrize
 } from "./pages";
 import { getUser } from "./api/api";
 import { useDispatch } from "react-redux";
@@ -59,12 +61,15 @@ function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="tournaments" element={<Tournament />} />
+            <Route path="prize-list" element={<PrizePyramidList />} />
             <Route path="users" element={<AllUsers />} />
             <Route path="player/:teamId" element={<Player />} />
             <Route path="teams/:id" element={<Teams />} />
             <Route path="matches/:id" element={<Match />} />
             <Route path="matches/add" element={<AddMatch />} />
             <Route path="matches/update/:matchId" element={<AddMatch />} />
+            <Route path="prize/add" element={<AddPrize />} />
+            <Route path="prize/update/:prizeId" element={<AddPrize />} />
           </Route>
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/register" element={<Register />} />

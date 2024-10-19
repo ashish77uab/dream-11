@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAllMatchOfTournament, deleteMatch, distributeMoney } from "../../api/api";
+import { getAllMatchOfTournament, deleteMatch, distributeMoney, getAllPrizePyramid, deletePrizePyramid } from "../../api/api";
 import { toast } from "react-toastify";
 import ToastMsg from "../../components/toast/ToastMsg";
 import ActionButton from "../../components/button/ActionButton";
@@ -9,25 +9,25 @@ import DeleteConfirmation from "../../components/modals/DeleteConfirmation";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import RenderNoData from "../../components/layout/RenderNoData";
 import moment from "moment";
-const Match = () => {
+const PrizePyramidList = () => {
   const navigate=useNavigate()
   const [loading,setLoading]=useState(false)
   const location = useLocation();
   const { id } = useParams();
   const [isAddNewTeamOpen, setIsAddNewTeamOpen] = useState(false);
-  const [team, setTeam] = useState(null);
+  const [prize, setPrize] = useState(null);
   const [isConfirmedOpen, setIsConfirmedOpen] = useState(false);
   const isClosed = isAddNewTeamOpen === false;
-  const [matches, setMatches] = useState(null);
+  const [prizes, setPrizes] = useState(null);
   const [fetchLoading, setFetchLoading] = useState(false);
 
-  const getAllMatchesList = async () => {
+  const getAllPrizeList = async () => {
     setFetchLoading(true)
     try {
-      const res = await getAllMatchOfTournament({ id: id });
+      const res = await getAllPrizePyramid();
       const { status, data } = res;
       if (status >= 200 && status <= 300) {
-        setMatches(data);
+        setPrizes(data);
       } else {
         toast.error(<ToastMsg title={data.message} />);
       }
@@ -39,18 +39,18 @@ const Match = () => {
   };
 
   useEffect(() => {
-    getAllMatchesList();
-  }, [isClosed]);
+    getAllPrizeList();
+  }, []);
 
   const handleDelete = async () => {
     setLoading(true)
     try {
-      const res = await deleteMatch(team._id);
+      const res = await deletePrizePyramid(prize._id);
       const { status, data } = res;
       if (status >= 200 && status <= 300) {
         toast.success(<ToastMsg title="Deleted Successfully" />);
         setIsConfirmedOpen(false);
-        getAllMatchesList();
+        getAllPrizeList();
       } else {
         toast.error(<ToastMsg title={data.message} />);
       }
@@ -60,31 +60,15 @@ const Match = () => {
       setLoading(false)
     }
   };
-  const handleDistributeMoney= async(matchId)=>{
-    setLoading(true)
-    try {
-      const res = await distributeMoney(matchId);
-      const { status, data } = res;
-      if (status >= 200 && status <= 300) {
-        toast.success(<ToastMsg title="Distributed Successfully" />);
-        getAllMatchesList();
-      } else {
-        toast.error(<ToastMsg title={data.message} />);
-      }
-    } catch (error) {
-      toast.error(<ToastMsg title={error?.response?.data?.message} />);
-    } finally {
-      setLoading(false)
-    }
-  }
+
   return (
     <>
       <div>
         <header className="mb-4 flex items-center justify-between">
           <h3 className="heading-3">
-            All Matches of {location?.state?.name}{" "}
+            All Prizes Pyramid Listing 
           </h3>
-          <Link to='/dashboard/matches/add' className="btn-primary">Add New Match </Link>
+          <Link to='/dashboard/prize/add' className="btn-primary">Add New Pyramid  </Link>
         </header>
         <div>
           <div className="overflow-x-auto w-full">
@@ -92,38 +76,25 @@ const Match = () => {
               <thead>
                 <tr>
                   <th className="w-[80px]">Sr.No</th>
-                  <th>Home</th>
-                  <th>Away</th>
-                  <th>Time</th>
-                  <th>Toss</th>
-                  <th>Winning Amount</th>
-                  <th>Entry Fees</th>
+                  <th>Amount</th>
+                  <th>Entry Fess</th>
                   <th>Winning Percentage</th>
-                  <th>Distribute Prize</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {matches?.map((match, index) => (
+                {prizes?.map((prizes, index) => (
                   <tr>
                     <td className="w-[80px]">{index + 1}</td>
-                    <td>{match.home?.name}</td>
-                    <td>{match.away?.name}</td>
-                    <td>{moment(match.time).format('MMM DD YYYY hh:mm a')}</td>
-                    <td>{match.toss}</td>
-                    <td>{match.winningAmount}</td>
-                    <td>{match.entryFees}</td>
-                    <td>{match.winningPercentage}</td>
-                    <td>
-                      <button onClick={() => handleDistributeMoney(match?._id)} className="btn btn-primary">Distribute</button>
-                    </td>
-                   
+                    <td>{prizes.winningAmount}</td>
+                    <td>{prizes.entryFees}</td>
+                    <td>{prizes.winningPercentage}</td>
                     <td>
                       <div className="flex justify-center gap-2">
-                        <ActionButton onClick={() => navigate(`/dashboard/matches/update/${match._id}`)}>{reactIcons.edit}</ActionButton>
+                        <ActionButton onClick={() => navigate(`/dashboard/prize/update/${prizes._id}`)}>{reactIcons.edit}</ActionButton>
                         <DeleteButton
                           onClick={() => {
-                            setTeam(match);
+                            setPrize(prizes);
                             setIsConfirmedOpen(true);
                           }}
                         >
@@ -133,7 +104,7 @@ const Match = () => {
                     </td>
                   </tr>
                 ))}
-                {matches?.length < 1 && !fetchLoading && <RenderNoData title={'No matches available'} />}
+                {prizes?.length < 1 && !fetchLoading && <RenderNoData title={'No prizes available'} />}
                 {fetchLoading && <div className="py-8 text-center font-semibold">Loading please wait....</div>}
               </tbody>
             </table>
@@ -144,11 +115,11 @@ const Match = () => {
         isOpen={isConfirmedOpen}
         closeModal={() => setIsConfirmedOpen(false)}
         handleDelete={handleDelete}
-        title={"sub category"}
+        title={"Prize"}
         loading={loading}
       />
     </>
   );
 };
 
-export default Match;
+export default PrizePyramidList;

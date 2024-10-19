@@ -2,8 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import { numberWithCommas } from "../../utils/helpers";
-import { reactIcons } from "../../utils/icons";
 const MatchCard = ({ match }) => {
+  const filledSpot = match?.eventCount?.[0]?.eventCount||0
+  const totalSpots = Math.floor(match?.prize?.winningAmount / match?.prize?.entryFees)
+  const perCentage = filledSpot * 100 / totalSpots 
   return (
     <Link to={`/match/${match._id}`} className="p-4 border border-zinc-300 rounded-md">
       <div className="flex justify-between items-start gap-2 ">
@@ -30,19 +32,26 @@ const MatchCard = ({ match }) => {
           </div>
 
         </div>
-
-        <div className="flex flex-col items-end gap-1">
-          <button className="btn-primary btn-sm ">Join</button>
+      </div>
+      <div className="mt-4">
+        <div className="flex justify-between gap-2 mb-2">
+          <span className="text-sm">{numberWithCommas(filledSpot)} spot filled</span>
+          <span className="text-sm">{numberWithCommas(totalSpots)} total spots</span>
         </div>
+        <div className="h-[8px] rounded-full bg-gray-200">
+          <div style={{ width: `${perCentage}%` }} className="h-full rounded-full bg-green-500"></div>
+        </div>
+
       </div>
       <div className="flex items-start gap-1 justify-between mt-4">
         <div>
           <p>Starts at <b>{moment(match?.time)?.format('DD MMM, HH:mm')}</b> </p>
-          <p>Pool Amount  Rs.<b> {numberWithCommas(match?.winningAmount)}</b> </p>
+          <p>Pool Prize  Rs.<b> {numberWithCommas(match?.prize?.winningAmount)}</b> </p>
         </div>
         <div>
-          <p>Entry Fees  Rs.<b> {match?.entryFees}</b> </p>
-          <p>Winnings  <b> {match?.winningPercentage}%</b> </p>
+          <p>Entry Fees  Rs.<b> {match?.prize?.entryFees}</b> </p>
+          <p>Winnings  <b> {match?.prize?.winningPercentage}%</b> </p>
+          <p>1st Rank Prize   Rs.<b> {numberWithCommas(match?.prize?.distributionPyramid?.find((item) => item?.rank===1)?.prize)}</b> </p>
         </div>
 
       </div>

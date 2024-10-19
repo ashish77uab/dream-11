@@ -56,6 +56,7 @@ export const getTeam = (formData) =>
 export const addMatch = (formData) =>
   API.post("match/add", formData);
 export const deleteMatch = (id) => API.delete(`match/${id}`);
+export const distributeMoney = (id) => API.put(`match/distribute-money/${id}`);
 export const updateMatch = (id, formData) =>
   API.put(`match/${id}`, formData);
 export const getAllMatchOfTournament = ({ id }) =>
@@ -64,6 +65,18 @@ export const getMatch = (id) =>
   API.get(`match/${id}`);
 export const getTopMatches = () =>
   API.get(`match/top`);
+
+// Prize
+export const createPrizePyramid = (formData) =>
+  API.post("prize/add", formData);
+export const deletePrizePyramid = (id) => API.delete(`prize/${id}`);
+export const updtePrizePyramid = (id, formData) =>
+  API.put(`prize/update/${id}`, formData);
+export const getAllPrizePyramid = () =>
+  API.get(`prize/all`);
+export const getPrizePyramid = (id) =>
+  API.get(`prize/${id}`);
+
 
 // User Team
 export const addUserTeam = (formData) =>

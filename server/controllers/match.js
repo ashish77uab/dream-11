@@ -46,6 +46,34 @@ export const getMatch = async (req, res) => {
       },
       {
         $lookup: {
+          from: "prizepyramids", // Collection to join (Team)
+          localField: "prize", // Field from Match schema
+          foreignField: "_id", // Field from Team schema
+          as: "prize" // Alias for the output (home team details)
+        }
+      },
+      {
+        $unwind: "$prize" // Unwind the array to have a single team object
+      },
+      {
+        $lookup: {
+          from: "events", // Collection to join (Event)
+          let: { matchId: "$_id" }, // Pass match _id to the lookup
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$match", "$$matchId"] } // Match event's matchId with the current match
+              }
+            },
+            {
+              $count: "eventCount" // Count the number of matching events
+            }
+          ],
+          as: "eventCount" // Alias for the output
+        }
+      },
+      {
+        $lookup: {
           from: "players", // Collection to join (Player)
           localField: "home._id", // Field from home team (Team schema)
           foreignField: "team", // Field from Player schema
@@ -75,6 +103,8 @@ export const getMatch = async (req, res) => {
           entryFees: { $first: "$entryFees" },
           winningPercentage: { $first: "$winningPercentage" },
           status: { $first: "$status" },
+          prize: { $first: "$prize" },
+          eventCount: { $first: "$eventCount" },
         }
       }
     ]);
@@ -142,6 +172,20 @@ export const getTopMatches = async (req, res) => {
         }
       },
       {
+        $unwind: "$home" // Unwind the array to have a single team object
+      },
+      {
+        $lookup: {
+          from: "prizepyramids", // Collection to join (Team)
+          localField: "prize", // Field from Match schema
+          foreignField: "_id", // Field from Team schema
+          as: "prize" // Alias for the output (home team details)
+        }
+      },
+      {
+        $unwind: "$prize" // Unwind the array to have a single team object
+      },
+      {
         $lookup: {
           from: "teams", // Collection to join (Team)
           localField: "away", // Field from Match schema
@@ -150,16 +194,51 @@ export const getTopMatches = async (req, res) => {
         }
       },
       {
-        $unwind: "$home" // Unwind the array to have a single team object
-      },
-      {
         $unwind: "$away" // Unwind the array to have a single team object
       },
+      {
+        $lookup: {
+          from: "events", // Collection to join (Event)
+          let: { matchId: "$_id" }, // Pass match _id to the lookup
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$match", "$$matchId"] } // Match event's matchId with the current match
+              }
+            },
+            {
+              $count: "eventCount" // Count the number of matching events
+            }
+          ],
+          as: "eventCount" // Alias for the output
+        }
+      },
+      
+      
+      
      
     ]);
     res.status(200).json(matchList);
   } catch (error) {
     console.log(error)
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+export const distributeMoney = async (req, res) => {
+  try {
+   
+    const match = await Match.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body
+      },
+      { new: true }
+    );
+
+    if (!match)
+      return res.status(400).json({ message: "the category cannot be updated!" });
+    res.status(201).json(match);
+  } catch (error) {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };

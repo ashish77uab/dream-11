@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import TextInput from "../../components/forms/TextInput";
 import ReactSelect from "../../components/forms/ReactSelect";
-import { getAllTeam, getMatch, addMatch, updateMatch, getTournaments } from "../../api/api";
+import { getAllTeam, getMatch, addMatch, updateMatch, getTournaments, getAllPrizePyramid } from "../../api/api";
 import { toast } from "react-toastify";
 import ToastMsg from "../../components/toast/ToastMsg";
 import { useNavigate, useParams } from "react-router-dom";
@@ -17,6 +17,7 @@ const initialState = {
     winningAmount: '',
     entryFees: '',
     winningPercentage: '',
+    prize:''
 };
 const AddMatch = () => {
     const { matchId } = useParams();
@@ -24,10 +25,12 @@ const AddMatch = () => {
     const [form, setForm] = useState(initialState);
     const [loading, setLoading] = useState(false);
     const [tournaments, setTournaments] = useState([]);
+    const [prizes, setPrizes] = useState([]);
     const [select, setSelect] = useState({
         home: '',
         away: '',
-        tournament: ''
+        tournament: '',
+        prize:''
     });
     const [teams, setTeams] = useState([]);
     const [fetchLoading, setFetchLoading] = useState(false);
@@ -77,7 +80,25 @@ const AddMatch = () => {
             setLoading(false)
         }
     };
-
+    const getAllPrizeList = async () => {
+        setFetchLoading(true)
+        try {
+            const res = await getAllPrizePyramid();
+            const { status, data } = res;
+            if (status >= 200 && status <= 300) {
+                setPrizes(data?.map((item) => ({ label: item?.winningAmount, value: item?._id })));
+            } else {
+                toast.error(<ToastMsg title={data.message} />);
+            }
+        } catch (error) {
+            toast.error(<ToastMsg title={error?.response?.data?.message} />);
+        } finally {
+            setFetchLoading(false)
+        }
+    };
+    useEffect(() => {
+        getAllPrizeList();
+    }, []);
     const getAllTournaments = async () => {
         setFetchLoading(true)
         try {
@@ -126,6 +147,7 @@ const AddMatch = () => {
                     winningAmount: data?.winningAmount,
                     entryFees: data?.entryFees,
                     winningPercentage: data?.winningPercentage,
+                    prize:data?.prize
                 });
                 getAllTeamsData(data?.tournament)
             } else {
@@ -146,14 +168,16 @@ const AddMatch = () => {
         }
     }, [matchId]);
     useEffect(() => {
-        if (tournaments && teams && form) {
+        if (tournaments && teams && form && prizes) {
             const home = teams?.find(item=>(item?.value === form?.home))
             const away = teams?.find(item=>(item?.value === form?.away))
             const tournament = tournaments?.find(item=>(item?.value === form?.tournament))
+            const prize = prizes?.find(item => (item?.value === form?.prize))
             setSelect({
                 home,
                 away,
                 tournament,
+                prize
             });
 
 
@@ -180,6 +204,15 @@ console.log(form,'form')
                             setForm({ ...form, tournament: e?.value });
                             setSelect(prev => ({ ...prev, tournament: e }));
                             getAllTeamsData(e?.value)
+                        }}
+                    />
+                    <ReactSelect
+                        label={"Prize Distribution"}
+                        options={prizes}
+                        value={select?.prize}
+                        onChange={(e) => {
+                            setForm({ ...form, prize: e?.value });
+                            setSelect(prev => ({ ...prev, prize: e }));
                         }}
                     />
                     <ReactSelect

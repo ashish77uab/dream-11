@@ -13,6 +13,7 @@ import bannerRoutes from "./routes/banner.js";
 import orderRoutes from "./routes/orders.js";
 import wishListRoutes from "./routes/wishlist.js";
 import messagesRoutes from "./routes/message.js";
+import prizeRoutes from "./routes/prizePyramid.js";
 import playerRoutes from "./routes/player.js";
 import upload from "./middleware/upload.js";
 import dotenv from "dotenv";
@@ -52,6 +53,7 @@ app.use("/orders", orderRoutes);
 app.use("/wishlist", wishListRoutes);
 app.use("/voucher", voucherRoutes);
 app.use("/messages", messagesRoutes);
+app.use("/prize",prizeRoutes);
 app.post("/upload", upload.single("file"), (req, res) => {
   res.status(200).json(req.file.filename);
 });

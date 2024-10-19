@@ -16,6 +16,12 @@ export const links = [
     title: "Tournaments",
     icon: reactIcons.list,
   },
+  {
+    path: "prize-list",
+    title: "Prize Distribution",
+    icon: reactIcons.list,
+  },
+  
   
 ];
 export const colorsOptions=[

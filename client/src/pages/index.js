@@ -13,6 +13,8 @@ import AllUsers from "./dashboard/AllUsers";
 import Match from "./dashboard/Match";
 import AddMatch from "./dashboard/AddMatch";
 import Player from "./dashboard/Player";
+import PrizePyramidList from "./dashboard/PrizePyramidList";
+import AddPrize from "./dashboard/AddPrize";
 
 export {
   Login,
@@ -29,5 +31,7 @@ export {
   Match,
   Tournament,
   AddMatch,
-  Player
+  Player,
+  PrizePyramidList,
+  AddPrize
 };
