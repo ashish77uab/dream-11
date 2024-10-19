@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const playerStatsSchema = mongoose.Schema(
+const playerStatHistorySchema = mongoose.Schema(
   {
     run: {
       type: Number,
@@ -27,8 +27,12 @@ const playerStatsSchema = mongoose.Schema(
       ref: "Player",
       required: true,
     },
+    match: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Match",
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model("PlayerScore", playerStatsSchema);
+export default mongoose.model("PlayerStatHistory", playerStatHistorySchema);

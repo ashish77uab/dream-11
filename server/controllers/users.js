@@ -7,7 +7,6 @@ import crypto from "crypto";
 import { sendEmail } from "../SendEmail.js";
 import mongoose from "mongoose";
 import { deleteFileFromCloudinary, uploadImageToCloudinary } from "../helpers/functions.js";
-import Notification from "../models/Notification.js";
 import Wallet from "../models/Wallet.js";
 
 export const signin = async (req, res) => {
@@ -498,57 +497,7 @@ export const getAllAdmin = async (req, res) => {
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
-export const getNotifications = async (req, res) => {
-  try {
-    const userId = req?.user?.id
-    const skip = parseInt(req?.query?.skip) || 0;
-    const take = parseInt(req?.query?.take) || 10;
-    const totalNotifications = await Notification.countDocuments({
-      user: mongoose.Types.ObjectId(userId)
-    });
-    const allNotifications = await Notification.aggregate([
-      {
-        $match: { user: mongoose.Types.ObjectId(userId) }, // Match orders for the user
-      },
-      {
-        $sort: { createdAt: -1 }, 
-      },
-      {
-        $skip: skip,
-      },
-      {
-        $limit: take, 
-      }
 
-    ]);
-    res.status(200).json({
-      notifications: allNotifications,
-      totalNotifications
-    });
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-export const deleteNotifications = async (req, res) => {
-  try {
-    const notificationId = req?.params?.id
-    const deletedNotification = await Notification.findByIdAndDelete(notificationId);
-    res.status(200).json(deletedNotification);
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-export const readNotifications = async (req, res) => {
-  try {
-    const notificationId = req?.params?.id
-    const updatedNotification = await Notification.findByIdAndUpdate(notificationId,{$set:{
-      isRead:true,
-    }});
-    res.status(200).json(updatedNotification);
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
 
 export const resetPasswordRequestController = async (req, res) => {
   try {

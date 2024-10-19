@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import Match from "../models/Match.js";
+import Team from "../models/Team.js";
+import PlayerStatHistory from "../models/PlayerStatHistory.js";
 export const createMatch = async (req, res) => {
   try {
 
@@ -7,11 +9,15 @@ export const createMatch = async (req, res) => {
       ...req?.body
     });
     match = await match.save();
-
+    const home = await Team.findById(req.body.home)
+    const away = await Team.findById(req.body.away)
+    let tempPlayerHistory = [...home.players, ...away.players]?.map((player) => ({ match: match?._id, player: player }))
+    await PlayerStatHistory.create(tempPlayerHistory)
     if (!match)
       return res.status(400).json({ message: "the match cannot be created!" });
     res.status(201).json(match);
   } catch (error) {
+    console.log(error,'error')
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -142,6 +148,17 @@ export const getAllMatchOfTournament = async (req, res) => {
           foreignField: "_id", // Field from Team schema
           as: "away" // Alias for the output (away team details)
         }
+      },
+      {
+        $lookup: {
+          from: "prizepyramids", // Collection to join (Team)
+          localField: "prize", // Field from Match schema
+          foreignField: "_id", // Field from Team schema
+          as: "prize" // Alias for the output (home team details)
+        }
+      },
+      {
+        $unwind: "$prize" // Unwind the array to have a single team object
       },
       {
         $unwind: "$home" // Unwind the array to have a single team object

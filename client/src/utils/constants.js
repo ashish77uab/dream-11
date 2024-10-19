@@ -19,7 +19,7 @@ export const links = [
   {
     path: "prize-list",
     title: "Prize Distribution",
-    icon: reactIcons.list,
+    icon: reactIcons.prize,
   },
   
   

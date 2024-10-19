@@ -111,9 +111,9 @@ const Match = () => {
                     <td>{match.away?.name}</td>
                     <td>{moment(match.time).format('MMM DD YYYY hh:mm a')}</td>
                     <td>{match.toss}</td>
-                    <td>{match.winningAmount}</td>
-                    <td>{match.entryFees}</td>
-                    <td>{match.winningPercentage}</td>
+                    <td>{match?.prize?.winningAmount}</td>
+                    <td>{match?.prize?.entryFees}</td>
+                    <td>{match?.prize?.winningPercentage}</td>
                     <td>
                       <button onClick={() => handleDistributeMoney(match?._id)} className="btn btn-primary">Distribute</button>
                     </td>

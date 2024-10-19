@@ -3,6 +3,7 @@ import Player from "../models/Player.js";
 import Team from "../models/Team.js";
 import PlayerStat from "../models/PlayerStat.js";
 import Event from "../models/Event.js";
+import PlayerStatHistory from "../models/PlayerStatHistory.js";
 export const createPlayer = async (req, res) => {
   try {
     const teamId = req?.body?.team
@@ -120,6 +121,9 @@ export const updtePlayerScore = async (req, res) => {
       },
       { new: true }
     );
+    const tempData = { ...updatedScore.toObject() }; 
+    delete tempData?._id
+    await PlayerStatHistory.findOneAndUpdate({ player: updatedScore?.player }, tempData, {new: true})
     const events = await Event.aggregate([
       {
         $lookup: {
@@ -142,7 +146,7 @@ export const updtePlayerScore = async (req, res) => {
       },
       {
         $lookup: {
-          from: "playerscores", // Join playerscores collection
+          from: "playerstathistories", // Join playerscores collection
           localField: "team.players", // Field from UserTeam schema (players array)
           foreignField: "player", // Field from PlayerScore schema
           as: "team.playerScores" // Alias for player scores
@@ -294,6 +298,7 @@ export const updtePlayerScore = async (req, res) => {
       return res.status(400).json({ message: "the score cannot be updated!" });
     res.status(201).json(updatedScore);
   } catch (error) {
+    console.log(error)
     return res.status(500).json({ message: 'Internal server error' });
   }
 };

@@ -32,12 +32,14 @@ export const getUserMatchTeam = async (req, res) => {
 
 export const createUserTeam = async (req, res) => {
   try {
+    const { match, players }=req.body
     let team = new UserTeam({
       ...req?.body
     });
     team = await team.save();
     if (!team)
       return res.status(400).json({ message: "the team cannot be created!" });
+  
     res.status(201).json(team);
   } catch (error) {
     console.log(error)
@@ -123,7 +125,7 @@ export const getEvents = async (req, res) => {
       },
       {
         $lookup: {
-          from: "playerscores", // Join playerscores collection
+          from: "playerstathistories", // Join playerscores collection
           localField: "team.players", // Field from UserTeam schema (players array)
           foreignField: "player", // Field from PlayerScore schema
           as: "team.playerScores" // Alias for player scores

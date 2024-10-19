@@ -243,7 +243,7 @@ const MatchDetail = () => {
               <span className="text-sm">{numberWithCommas(totalSpots)} total spots</span>
             </div>
             <div className="h-[8px] rounded-full bg-gray-200">
-              <div style={{ width: `${perCentage}%` }} className="h-full rounded-full bg-green-500"></div>
+              <div style={{ width: `${perCentage}%` }} className="h-full rounded-full bg-green-700"></div>
             </div>
 
           </div>

@@ -14,9 +14,6 @@ const initialState = {
     location: 'India',
     toss: 'Pending',
     isTop: false,
-    winningAmount: '',
-    entryFees: '',
-    winningPercentage: '',
     prize:''
 };
 const AddMatch = () => {
@@ -144,9 +141,6 @@ const AddMatch = () => {
                     location: data?.location,
                     toss: data?.toss,
                     isTop: data?.isTop,
-                    winningAmount: data?.winningAmount,
-                    entryFees: data?.entryFees,
-                    winningPercentage: data?.winningPercentage,
                     prize:data?.prize
                 });
                 getAllTeamsData(data?.tournament)
@@ -240,34 +234,6 @@ console.log(form,'form')
                         value={form.time}
                         onChange={handleChange}
                     />
-                    <TextInput
-                        name="entryFees"
-                        type="number"
-                        label={"Entry fees"}
-                        placeholder="Enter Entry Fee amount"
-                        value={form.entryFees}
-                        onChange={handleChange}
-                    />
-                    <TextInput
-                        name="winningAmount"
-                        type="number"
-                        label={"Entry winning Amount"}
-                        placeholder="Enter winning Amount"
-                        value={form.winningAmount}
-                        onChange={handleChange}
-                    />
-
-                    <TextInput
-                        name="winningPercentage"
-                        type="number"
-                        max={100}
-                        label={"Winning distributed Percentage"}
-                        placeholder="Enter winning distributed Percentage"
-                        value={form.winningPercentage}
-                        onChange={handleChange}
-                    />
-
-
                     <div className="flex gap-2 col-span-2">
                         <label
                             htmlFor="isTop"

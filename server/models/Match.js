@@ -43,21 +43,6 @@ const matchSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    winningAmount: {
-      type: Number,
-      default: 0,
-      required: true,
-    },
-    entryFees: {
-      type: Number,
-      default: 0,
-      required: true,
-    },
-    winningPercentage: {
-      type: Number,
-      default: 0,
-      required: true,
-    },
     status: {
       type: String,
       enum: ["Pending", "Live", "Completed"],

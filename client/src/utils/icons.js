@@ -49,6 +49,7 @@ import { MdOutlineInventory } from "react-icons/md";
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { FaPaperPlane } from "react-icons/fa";
 import { CiCircleMinus, CiCirclePlus } from "react-icons/ci";
+import { FaTrophy } from "react-icons/fa6";
 export const reactIcons = {
   plus: <CiCirclePlus />,
   minus: <CiCircleMinus />,
@@ -97,5 +98,6 @@ export const reactIcons = {
   dotFill: <GoDotFill/>,
   chat: <IoChatbubbleEllipsesOutline/>,
   plane: <FaPaperPlane/>,
-  live: <HiOutlineSignal/>
+  live: <HiOutlineSignal/>,
+  prize: <FaTrophy/>
 };
