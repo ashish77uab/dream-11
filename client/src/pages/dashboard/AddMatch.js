@@ -141,7 +141,7 @@ const AddMatch = () => {
                     location: data?.location,
                     toss: data?.toss,
                     isTop: data?.isTop,
-                    prize:data?.prize
+                    prize:data?.prize?._id
                 });
                 getAllTeamsData(data?.tournament)
             } else {

@@ -32,14 +32,13 @@ export const getUserMatchTeam = async (req, res) => {
 
 export const createUserTeam = async (req, res) => {
   try {
-    const { match, players }=req.body
+    const { match, players } = req.body
     let team = new UserTeam({
       ...req?.body
     });
     team = await team.save();
     if (!team)
       return res.status(400).json({ message: "the team cannot be created!" });
-  
     res.status(201).json(team);
   } catch (error) {
     console.log(error)
@@ -62,9 +61,9 @@ export const joinEvent = async (req, res) => {
       match: req.body?.match,
       team: req.body?.team,
       user: user?.id,
-    
+
     })
-    if (oldEvent[0]){
+    if (oldEvent[0]) {
       return res.status(400).json({ message: "Already joined with team!" });
     }
     let event = new Event({
@@ -126,8 +125,19 @@ export const getEvents = async (req, res) => {
       {
         $lookup: {
           from: "playerstathistories", // Join playerscores collection
-          localField: "team.players", // Field from UserTeam schema (players array)
-          foreignField: "player", // Field from PlayerScore schema
+          let: { playerIds: "$team.players", matchId: mongoose.Types.ObjectId(matchId) }, // Pass players and matchId
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $in: ["$player", "$$playerIds"] }, // Match players in the team
+                    { $eq: ["$match", "$$matchId"] } // Match the current matchId
+                  ]
+                }
+              }
+            }
+          ],
           as: "team.playerScores" // Alias for player scores
         }
       },
@@ -229,7 +239,27 @@ export const getEvents = async (req, res) => {
           isCurrentUser: { $eq: ["$user._id", mongoose.Types.ObjectId(req?.user?.id)] }
         }
       },
-      // Sort players by totalPoints in descending order
+      {
+        $sort: {
+          "team.totalPoints": -1 // Sort by total points
+        }
+      },
+      // Now, add ranking using $setWindowFields
+      {
+        $setWindowFields: {
+          sortBy: { "team.totalPoints": -1 }, // Sort by total points to calculate rank
+          output: {
+            rank: { $denseRank: {} } // Use $denseRank operator to assign rank
+          }
+        }
+      },
+      // Add a secondary sort so the current user is at the top
+      {
+        $sort: {
+          isCurrentUser: -1, // Show the logged-in user first
+          rank: 1 // Then sort by rank in ascending order
+        }
+      },
       {
         $project: {
           _id: 1,
@@ -238,21 +268,31 @@ export const getEvents = async (req, res) => {
           teamNumber: 1,
           teamRank: 1,
           teamScore: 1,
+          rank: 1,
+          isWon: 1,
+          amount: 1,
           "team._id": 1,
           "team.captain": 1,
           "team.viceCaptain": 1,
-          "team.players": 1 ,
-          "team.totalPoints": 1 ,
-          isCurrentUser: 1 
+          "team.players": 1,
+          "team.totalPoints": 1,
+          "team.playerScores": 1,
+          isCurrentUser: 1
         }
       },
-      {
-        $sort: {
-          isCurrentUser: -1, // Show the logged-in user first
-          "team.totalPoints": -1 // Then sort by total points (descending)
-        }
-      }
+
     ]);
+    if (events?.length > 0) {
+      events?.forEach(async (event, index) => {
+        await Event.findOneAndUpdate(
+          { team: event?.team?._id },
+          {
+            teamRank: event?.rank,  // Set the rank
+            teamScore: event?.team?.totalPoints // Set the team's total score
+          }
+        );
+      });
+    }
 
     res.status(200).json(events); // Return the populated events
   } catch (error) {

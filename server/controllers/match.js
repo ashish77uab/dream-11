@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import Match from "../models/Match.js";
 import Team from "../models/Team.js";
 import PlayerStatHistory from "../models/PlayerStatHistory.js";
+import Event from "../models/Event.js";
+import Wallet from "../models/Wallet.js";
 export const createMatch = async (req, res) => {
   try {
 
@@ -111,6 +113,7 @@ export const getMatch = async (req, res) => {
           status: { $first: "$status" },
           prize: { $first: "$prize" },
           eventCount: { $first: "$eventCount" },
+          isDistributed: { $first: "$isDistributed" },
         }
       }
     ]);
@@ -243,18 +246,97 @@ export const getTopMatches = async (req, res) => {
 };
 export const distributeMoney = async (req, res) => {
   try {
-   
-    const match = await Match.findByIdAndUpdate(
-      req.params.id,
+    const matchId = req.params.id;
+    const matchData = await Match.aggregate([
       {
-        ...req.body
+        $match: { _id: mongoose.Types.ObjectId(matchId) } // Match by ID
+      },
+      {
+        $lookup: {
+          from: "prizepyramids", // Collection to join (Team)
+          localField: "prize", // Field from Match schema
+          foreignField: "_id", // Field from Team schema
+          as: "prize" // Alias for the output (home team details)
+        }
+      },
+      {
+        $unwind: "$prize" // Unwind the array to have a single team object
+      },
+    ]);
+    const events = await Event.aggregate([
+      {
+        $match: { match: mongoose.Types.ObjectId(matchId) } // Match by ID
+      },
+      {
+        $lookup: {
+          from: "users", // Join users collection
+          localField: "user", // Field from Event schema
+          foreignField: "_id", // Field from User schema
+          as: "user" // Alias for the output
+        }
+      },
+      {
+        $unwind: "$user" // Unwind the array to get a single user object
+      },
+      
+      {
+        $sort: {
+          teamRank: 1 // Then sort by rank in ascending order
+        }
+      },
+    ]);
+    const prizes = matchData?.[0]?.prize
+    const topThreeRanks = prizes?.distributionPyramid
+    const restRanks = prizes?.rangePyramid
+    const getRankPrize=(event)=>{
+      const prize1 = topThreeRanks?.find((item) => item?.rank === event.teamRank)
+      const prize2 = restRanks?.find((item) => {
+        const prize = Number(item?.first) >= Number(event?.teamRank) || Number(item?.last) >= Number(event?.teamRank)
+        if (prize) {
+          return true
+        } else {
+          return false
+        }
+
+      })
+      return prize1 || prize2||null
+
+    }
+
+    if (events?.length > 0) {
+      events?.forEach(async (event, index) => {
+        const prize = getRankPrize(event)
+        const amount=Number(prize?.prize)||0
+        await Event.findByIdAndUpdate(
+          event?._id,
+          {
+            isWon: prize? true:false,  // Set the rank
+            amount: prize ? amount :0 // Set the team's total score
+          }
+        );
+        await Wallet.findByIdAndUpdate(
+          event?.user?.wallet,
+          {
+            $inc: {
+              winnings: prize? amount:0      // Increase the winnings
+            }
+          },
+          { new: true }  // This will return the updated document
+        );
+      });
+    }
+    const match = await Match.findByIdAndUpdate(
+      matchId,
+      {
+        isDistributed:true,
+        status:'Completed'
       },
       { new: true }
     );
 
     if (!match)
-      return res.status(400).json({ message: "the category cannot be updated!" });
-    res.status(201).json(match);
+      return res.status(400).json({ message: "the amount cannot be distributed!" });
+    res.status(201).json(events);
   } catch (error) {
     return res.status(500).json({ message: 'Internal server error' });
   }

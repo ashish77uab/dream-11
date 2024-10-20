@@ -32,6 +32,9 @@ const authSlice = createSlice({
     updateNotification: (state, action) => {
       state.notifications = { ...state?.notifications, notifications: [action.payload,...state?.notifications?.notifications], totalNotifications: state?.notifications?.totalNotifications+1 };
     },
+    updateUserWallet: (state, action) => {
+      state.user.wallet.amount = action.payload;
+    },
     updateUserCarts: (state, action) => {
       state.user.carts = [...state.user.carts, action.payload];
     },
@@ -96,7 +99,8 @@ export const {
   readNotificationComplete,
   readNotificationStart,
   updateNotification,
-  toggleNewNotification
+  toggleNewNotification,
+  updateUserWallet
 } = authSlice.actions;
 
 export default authSlice.reducer;

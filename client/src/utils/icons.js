@@ -50,6 +50,7 @@ import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { FaPaperPlane } from "react-icons/fa";
 import { CiCircleMinus, CiCirclePlus } from "react-icons/ci";
 import { FaTrophy } from "react-icons/fa6";
+import { GrPowerReset } from "react-icons/gr";
 export const reactIcons = {
   plus: <CiCirclePlus />,
   minus: <CiCircleMinus />,
@@ -99,5 +100,6 @@ export const reactIcons = {
   chat: <IoChatbubbleEllipsesOutline/>,
   plane: <FaPaperPlane/>,
   live: <HiOutlineSignal/>,
-  prize: <FaTrophy/>
+  prize: <FaTrophy/>,
+  reset: <GrPowerReset/>
 };

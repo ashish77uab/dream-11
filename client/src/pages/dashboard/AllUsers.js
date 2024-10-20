@@ -41,31 +41,10 @@ const AllUsers = () => {
     }
   };
 
-  const getAllVouchersList = async () => {
-    setFetchLoading(true)
-    try {
-      const res = await getAllVouchers({ limit:1000, page:1 });
-      const { status, data } = res;
-      if (status >= 200 && status <= 300) {
-        setVouchers(data);
-      } else {
-        toast.error(<ToastMsg title={data.message} />);
-      }
-    } catch (error) {
-      toast.error(<ToastMsg title={error?.response?.data?.message} />);
-    } finally {
-      setFetchLoading(false)
-    }
-  };
- 
-  
   useEffect(() => {
     getAllUsers();
    
   }, [page]);
-  useEffect(() => {
-    getAllVouchersList();
-  }, []);
   return (
     <>
       <div>

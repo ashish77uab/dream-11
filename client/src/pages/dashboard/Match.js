@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAllMatchOfTournament, deleteMatch, distributeMoney } from "../../api/api";
+import { getAllMatchOfTournament, deleteMatch, distributeMoney, resetPlayerData } from "../../api/api";
 import { toast } from "react-toastify";
 import ToastMsg from "../../components/toast/ToastMsg";
 import ActionButton from "../../components/button/ActionButton";
@@ -77,6 +77,23 @@ const Match = () => {
       setLoading(false)
     }
   }
+  const handleResetPlayerData= async(formData) => {
+    setLoading(true)
+    try {
+      const res = await resetPlayerData(formData);
+      const { status, data } = res;
+      if (status >= 200 && status <= 300) {
+        toast.success(<ToastMsg title="Reset Successfully" />);
+      } else {
+        toast.error(<ToastMsg title={data.message} />);
+      }
+    } catch (error) {
+      toast.error(<ToastMsg title={error?.response?.data?.message} />);
+    } finally {
+      setLoading(false)
+    }
+
+  }
   return (
     <>
       <div>
@@ -115,7 +132,7 @@ const Match = () => {
                     <td>{match?.prize?.entryFees}</td>
                     <td>{match?.prize?.winningPercentage}</td>
                     <td>
-                      <button onClick={() => handleDistributeMoney(match?._id)} className="btn btn-primary">Distribute</button>
+                     {match?.isDistributed ? <div className="text-center font-semibold text-sm text-green-600">Amount Distributed</div> :  <button onClick={() => handleDistributeMoney(match?._id)} className="btn btn-primary">Distribute</button>}
                     </td>
                    
                     <td>
@@ -129,6 +146,13 @@ const Match = () => {
                         >
                           {reactIcons.delete}
                         </DeleteButton>
+                        {match?.isDistributed && <DeleteButton
+                          onClick={() => {
+                            handleResetPlayerData({ home: match?.home?._id,away: match?.away?._id})
+                          }}
+                        >
+                          {reactIcons.reset}
+                        </DeleteButton>}
                       </div>
                     </td>
                   </tr>

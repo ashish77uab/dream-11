@@ -271,7 +271,7 @@ const AddPrize = () => {
                                     </FieldArray>
                                 </div>
                             </div>
-                            <button className="btn-primary" type="submit">{prizeId?'Update' :'Create'}</button>
+                            <button className="btn-primary mt-4" type="submit">{prizeId?'Update' :'Create'}</button>
                         </Form>
                     )
                 }}

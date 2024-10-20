@@ -33,7 +33,7 @@ const MatchCard = ({ match }) => {
 
         </div>
       </div>
-      <div className="mt-4">
+      {!match?.isDistributed && <div className="mt-4">
         <div className="flex justify-between gap-2 mb-2">
           <span className="text-sm">{numberWithCommas(filledSpot)} spot filled</span>
           <span className="text-sm">{numberWithCommas(totalSpots)} total spots</span>
@@ -42,16 +42,17 @@ const MatchCard = ({ match }) => {
           <div style={{ width: `${perCentage}%` }} className="h-full rounded-full bg-green-700"></div>
         </div>
 
-      </div>
+      </div>}
       <div className="flex items-start gap-1 justify-between mt-4">
         <div>
           <p>Starts at <b>{moment(match?.time)?.format('DD MMM, HH:mm')}</b> </p>
           <p>Pool Prize  Rs.<b> {numberWithCommas(match?.prize?.winningAmount)}</b> </p>
+          <p>1st Rank Prize   Rs.<b> {numberWithCommas(match?.prize?.distributionPyramid?.find((item) => item?.rank === 1)?.prize)}</b> </p>
         </div>
         <div>
           <p>Entry Fees  Rs.<b> {match?.prize?.entryFees}</b> </p>
           <p>Winnings  <b> {match?.prize?.winningPercentage}%</b> </p>
-          <p>1st Rank Prize   Rs.<b> {numberWithCommas(match?.prize?.distributionPyramid?.find((item) => item?.rank===1)?.prize)}</b> </p>
+          
         </div>
 
       </div>

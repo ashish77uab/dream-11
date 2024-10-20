@@ -30,7 +30,16 @@ const eventSchema = mongoose.Schema(
       type: Number,
       required: true,
       default:0
+    },
+    isWon:{
+      type: Boolean,
+      default:false,
+    },
+    amount:{
+      type: Number,
+      default:0,
     }
+
    
   },
   { timestamps: true }

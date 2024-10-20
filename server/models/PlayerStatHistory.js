@@ -31,6 +31,10 @@ const playerStatHistorySchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Match",
     },
+    isCompleted:{
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true }
 );

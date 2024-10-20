@@ -7,8 +7,9 @@ import { numberWithCommas } from "../utils/helpers";
 import moment from "moment";
 import { RoleConstant } from "../utils/constants";
 import { reactIcons } from "../utils/icons";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ViewUserTeam from "../components/modals/ViewUserTeam";
+import { updateUserWallet } from "../redux/features/authSlice";
 
 const PreviewPlayer = ({ player, team }) => {
   return (
@@ -33,6 +34,7 @@ const PreviewPlayer = ({ player, team }) => {
   )
 }
 const MatchDetail = () => {
+  const dispatch=useDispatch()
   const [isUserTeamPreviewOpen, setIsUserTeamPreviewOpen] = useState(false)
   const [userTeamPreviewData, setUserTeamPreviewData] = useState({
     item: '',
@@ -168,6 +170,10 @@ const MatchDetail = () => {
   }
   const handleJoinEvent = async () => {
     setUpdateLoading(true)
+    if (!selectedTeam || !teamNumber){
+      toast.error(<ToastMsg title={'Please select team first'} />);
+      return 
+    }
     try {
       const formData = {
         match: matchId,
@@ -181,6 +187,9 @@ const MatchDetail = () => {
       if (status >= 200 && status <= 300) {
         toast.success(<ToastMsg title={'Joined  Successfully'} />);
         handleReset()
+        const walletAmount = user?.wallet?.amount
+        const newWalletAmount = walletAmount - Number(match?.prize?.entryFees)
+        dispatch(updateUserWallet(newWalletAmount))
       } else {
         toast.error(<ToastMsg title={data.message} />);
       }
@@ -222,9 +231,9 @@ const MatchDetail = () => {
 
             </div>
 
-            {filledSpot === totalSpots ? <div className="bg-green-800 px-4 py-2 rounded-lg text-sm text-white" >Contest Filled</div> : <div className="flex flex-col items-end gap-1">
+            {!match?.isDistributed ? filledSpot === totalSpots ? <div className="bg-green-800 px-4 py-2 rounded-lg text-sm text-white" >Contest Filled</div> : <div className="flex flex-col items-end gap-1">
               <button onClick={handleJoinEvent} className="btn-primary btn-sm ">Join</button>
-            </div>}
+            </div> :null}
           </div>
           <div className="flex items-start gap-1 justify-between mt-4">
             <div>
@@ -237,7 +246,7 @@ const MatchDetail = () => {
             </div>
 
           </div>
-          <div className="mt-4">
+          {!match?.isDistributed && <div className="mt-4">
             <div className="flex justify-between gap-2 mb-2">
               <span className="text-sm">{numberWithCommas(filledSpot)} spot filled</span>
               <span className="text-sm">{numberWithCommas(totalSpots)} total spots</span>
@@ -246,10 +255,10 @@ const MatchDetail = () => {
               <div style={{ width: `${perCentage}%` }} className="h-full rounded-full bg-green-700"></div>
             </div>
 
-          </div>
+          </div>}
           <div className="mt-4 flex items-center gap-4">
-            <button onClick={() => setIsView(0)} className={` ${isView === 0 ? 'btn-primary' : 'btn-outline-primary'}`}>Create Team</button>
-            <button onClick={() => setIsView(1)} className={` ${isView === 1 ? 'btn-primary' : 'btn-outline-primary'}`}>View Team</button>
+            {!match?.isDistributed  &&<button onClick={() => setIsView(0)} className={` ${isView === 0 ? 'btn-primary' : 'btn-outline-primary'}`}>Create Team</button>}
+            <button onClick={() => { match?.isDistributed ? setIsView(prev=>prev===1?null :1) :  setIsView(1)}} className={` ${isView === 1 ? 'btn-primary' : 'btn-outline-primary'}`}>View Team</button>
           </div>
         </div>
         {isView === 1 &&
@@ -260,16 +269,18 @@ const MatchDetail = () => {
                   <div>
                     <h4 className="heading-4 text-center"> Team {upperIndex + 1}</h4>
                     <div key={item?._id} className="space-y-4 p-6 min-h-[440px] rounded-md bg-green-700 my-4 relative">
-                      <div className="absolute right-2 top-2 flex items-center gap-2">
-                        <span className="font-semibold">Select Team</span>
-                        <div onClick={() => {
+                      {!match?.isDistributed&&  <div className="absolute right-2 top-2 flex items-center gap-2">
+                        <span className="font-semibold text-white">Select Team</span>
+                          <div onClick={() => {
                           setSelectedTeam(prev => prev ? prev === item?._id ? null : item?._id : item?._id)
                           setTeamNumber(upperIndex + 1)
-                        }} className="w-10 h-10 rounded-full flex-center  bg-white cursor-pointer"> {item?._id === selectedTeam &&
+                        }} className="w-10 h-10 rounded-full flex-center  bg-white cursor-pointer"> 
+                        {item?._id === selectedTeam &&
                           <span className="text-2xl text-green-600">
                             {reactIcons.check}
-                          </span>}</div>
-                      </div>
+                          </span>}
+                          </div>
+                      </div>}
                       <div className="flex justify-center gap-4 flex-wrap">
                         {item?.players?.filter((player) => player.role === RoleConstant?.WicketKeeper)?.map((player, index) => (
                           <PreviewPlayer team={item} key={index} player={player} />
@@ -432,8 +443,8 @@ const MatchDetail = () => {
           <ul className="max-w-xl bg-white rounded-md border border-zinc-200 ">
             <div className="flex gap-2 px-4 py-2">
               <div className="flex-grow">Player</div>
-              <div className="text-center min-w-[80px]">Points</div>
-              <div className="text-center min-w-[80px]">Ranks</div>
+              <div className="text-center min-w-[80px]">Point</div>
+              <div className="text-center min-w-[80px]">Rank</div>
             </div>
             {events?.map((event, index) => (
               <li onClick={() => {
@@ -447,6 +458,10 @@ const MatchDetail = () => {
                   <img className="w-10 h-10 object-cover mr-1" src={event?.user?.profileImage || '/images/user.png'} alt="user" />
                   <div>
                     <p>{event?.user?.fullName} <span className="text-muted text-sm">( T{event?.teamNumber}</span> ) </p>
+                    {match?.isDistributed && 
+                       <p className={ `${event?.isWon ?'text-green-600' :'text-red-600'} font-semibold text-sm`}>
+                        Rs. {event?.isWon ? numberWithCommas(event?.amount) : match?.prize?.entryFees} {event?.isWon ?'won' :'lost'}
+                      </p>}
                   </div>
                 </div>
                 <div className="flex  text-center flex-col gap-2 min-w-[80px]">
@@ -455,7 +470,7 @@ const MatchDetail = () => {
                   </div>
                 </div>
                 <div className="flex text-center  flex-col gap-2 min-w-[80px]">
-                  <b className="text-gray-700 mr-1">{event?.teamRank}</b>
+                  <b className="text-gray-700 mr-1">{event?.rank}</b>
                 </div>
 
               </li>

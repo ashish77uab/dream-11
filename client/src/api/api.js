@@ -107,6 +107,8 @@ export const updatePlayerScore = (scoreId,data) =>
   API.put(`player/score/${scoreId}`, data);
 export const getPlayerScore = (playerId) =>
   API.get(`player/score/${playerId}`);
+export const resetPlayerData = (data) =>
+  API.put(`player/score-reset`,data);
 
 // wishlist
 export const addToWishList = (formData) => API.post("wishlist/add", formData);

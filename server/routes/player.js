@@ -6,11 +6,13 @@ import {
   updatePlayer,
   updtePlayerPlayingStatus,
   updtePlayerScore,
-  getPlayerScore
+  getPlayerScore,
+  resetPlayerData
 } from "../controllers/player.js";
 import express from "express";
 const router = express.Router();
 
+router.put("/score-reset", resetPlayerData);
 router.get(`/all/:id`, getAllPlayer);
 router.post("/add", createPlayer);
 router.get("/:id", getPlayer);

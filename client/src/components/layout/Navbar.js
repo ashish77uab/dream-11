@@ -59,7 +59,8 @@ const Navbar = () => {
             {user && (
               <div className="flex items-center md:gap-4 gap-2">
                 <div>
-                  <div className="md:block hidden"><b>Balance : </b> Rs. {numberWithCommas(user?.wallet?.amount || 0)}</div>
+                  <div className="md:block hidden"><b className="min-w-[100px] inline-block">Balance  </b>: &nbsp; Rs. {numberWithCommas(user?.wallet?.amount || 0)}</div>
+                  <div className="md:block hidden"><b className="min-w-[100px] inline-block">Winnings  </b>: &nbsp; Rs. {numberWithCommas(user?.wallet?.winnings || 0)}</div>
                 </div>
                 <Menu as="div" className="relative">
                   <Menu.Button
