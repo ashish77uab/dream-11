@@ -134,11 +134,15 @@ export const signup = async (req, res) => {
       user:result?._id,
     });
 
+    await User.findByIdAndUpdate(result?._id, {
+      wallet: wallet?._id
+    });
+
     const token = jwt.sign(
       { email: result.email, id: result._id, role: result.role },
       process.env.JWTSECRET,
       {
-        expiresIn: "1d",
+        expiresIn: "10d",
       }
     );
     res.status(201).json({ result, token });

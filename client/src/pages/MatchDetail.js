@@ -143,6 +143,10 @@ const MatchDetail = () => {
     setTeamNumber(null)
   }
   const handleCreateTeam = async () => {
+    if (!captain || !viceCaptain) {
+      toast.error(<ToastMsg title={'Please select captain and vice captain'} />);
+      return
+    }
     setUpdateLoading(true)
     try {
       const formData = {
@@ -174,6 +178,7 @@ const MatchDetail = () => {
       toast.error(<ToastMsg title={'Please select team first'} />);
       return 
     }
+   
     try {
       const formData = {
         match: matchId,
@@ -455,7 +460,7 @@ const MatchDetail = () => {
                 setIsUserTeamPreviewOpen(true)
               }} key={index} className={`px-4 py-4  flex items-center gap-2  cursor-pointer border-b border-b-zinc-200 ${event?.isCurrentUser ? 'bg-amber-100' : 'bg-white'} `}>
                 <div className="flex-grow gap-2 flex items-center">
-                  <img className="w-10 h-10 object-cover mr-1" src={event?.user?.profileImage || '/images/user.png'} alt="user" />
+                  <img className="w-10 h-10 object-cover rounded-full overflow-hidden mr-1" src={event?.user?.profileImage || '/images/user.png'} alt="user" />
                   <div>
                     <p>{event?.user?.fullName} <span className="text-muted text-sm">( T{event?.teamNumber}</span> ) </p>
                     {match?.isDistributed && 
