@@ -52,7 +52,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <div className="">
             <Link to="/" className="font-extrabold text-3xl text-amber-600">
-              Ashish Dream 11
+              Dream 11
             </Link>
           </div>
           <div className="flex gap-2 items-center">
